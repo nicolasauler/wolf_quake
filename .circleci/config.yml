@@ -39,7 +39,7 @@ jobs:
           key: v1-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
       - run:
           name: Run all tests
-          command: cargo test
+          command: cargo test --locked --all-features --all-targets
 
   security:
     docker:

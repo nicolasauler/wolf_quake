@@ -1,5 +1,5 @@
 <h1 align="center">
-    Wolf Quake
+    Wolf Quake :video_game:
 </h1>
 
 <p align="center">
@@ -17,7 +17,7 @@
 
 ## 🏞️ Overview
 
-Wolf Quake bla bla
+Wolf Quake is a parser for Quake 3 Arena log files.
 
 You can find the log file: [file](https://gist.github.com/cloudwalk-tests/be1b636e58abff14088c8b5309f575d8)
 
@@ -25,11 +25,11 @@ You can find the log file: [file](https://gist.github.com/cloudwalk-tests/be1b63
 
 ## 🦺 Security and 💻 Software
 
-Wolf Quake is written in Rust and uses `#![forbid(unsafe_code)]` to ensure everything is implemented in 100% safe Rust.
+Wolf Quake is written in Rust :crab: and uses `#![forbid(unsafe_code)]` to ensure everything is implemented in 100% safe Rust.
 
 Current status:
-- [x] A
-- [ ] B
+- [x] Enviroment setup: CI, local and github
+- [ ] Development
 
 ## ⚗️ Contributing
 ### Install pre-commit

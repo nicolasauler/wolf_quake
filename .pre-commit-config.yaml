@@ -30,3 +30,10 @@ repos:
       pass_filenames: false
       types: [file, rust]
       language: system
+    - id: generate documentation
+      name: Generate documentation
+      description: Generate cargo documentation via cargo doc
+      entry: cargo +nightly doc --no-deps --all-features
+      pass_filenames: false
+      types: [file, rust]
+      language: system
