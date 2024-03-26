@@ -99,7 +99,7 @@ jobs:
           command: rustup component add clippy
       - run:
           name: Linting
-          command: cargo clippy --all -- -D warnings -D rust::dead-code # only want dead code problems in CI and pre-commit
+          command: cargo clippy --all -- -D warnings -D dead-code # only want dead code problems in CI and pre-commit
 
   msrv:
     docker:
