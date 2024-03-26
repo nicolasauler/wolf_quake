@@ -1,7 +1,78 @@
 [package]
 name = "wolf_quake"
 version = "0.1.0"
+description = "Quake 3 log parser"
+repository = "https://github.com/nicolasauler/wolf_quake"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+keywords = ["parser", "cli", "quake"]
+categories = ["command-line-utilities", "parsing"]
 edition = "2021"
-rust-version = "1.56.1"
+rust-version = "1.58.1"
 
 [dependencies]
+
+[lints.rust]
+unsafe_code = { level = "forbid", priority = 3 }
+nonstandard_style = { level = "warn", priority = 2 }
+future_incompatible = { level = "warn", priority = 1 }
+missing_debug_implementations = { level = "warn", priority = 0 }
+
+[lints.clippy]
+# all group
+all = { level = "warn", priority = 5 }
+
+# restriction group
+allow_attributes_without_reason = { level = "warn", priority = 4 }
+as_underscore = { level = "warn", priority = 4 }
+panic_in_result_fn = { level = "warn", priority = 4 }
+unwrap_used = { level = "warn", priority = 4 }
+
+allow_attributes = { level = "warn", priority = 3 }
+arithmetic_side_effects = { level = "warn", priority = 3 }
+as_conversions = { level = "warn", priority = 3 }
+assertions_on_result_states = { level = "warn", priority = 3 }
+default_numeric_fallback = { level = "warn", priority = 3 }
+empty_enum_variants_with_brackets = { level = "warn", priority = 3 }
+empty_structs_with_brackets = { level = "warn", priority = 3 }
+error_impl_error = { level = "warn", priority = 3 }
+if_then_some_else_none = { level = "warn", priority = 3 }
+impl_trait_in_params = { level = "warn", priority = 3 }
+implicit_return = { level = "warn", priority = 3 }
+infinite_loop = { level = "warn", priority = 3 }
+integer_division = { level = "warn", priority = 3 }
+# integer_division_remainder_used = { level = "warn", priority = 3 } only in 1.78
+let_underscore_untyped = { level = "warn", priority = 3 }
+missing_assert_message = { level = "warn", priority = 3 }
+missing_asserts_for_indexing = { level = "warn", priority = 3 }
+missing_docs_in_private_items = { level = "warn", priority = 3 }
+missing_inline_in_public_items = { level = "warn", priority = 3 }
+multiple_inherent_impl = { level = "warn", priority = 3 }
+needless_raw_strings = { level = "warn", priority = 3 }
+panic = { level = "warn", priority = 3 }
+partial_pub_fields = { level = "warn", priority = 3 }
+redundant_type_annotations = { level = "warn", priority = 3 }
+ref_patterns = { level = "warn", priority = 3 }
+same_name_method = { level = "warn", priority = 3 }
+self_named_module_files = { level = "warn", priority = 3 }
+shadow_unrelated = { level = "warn", priority = 3 }
+single_char_lifetime_names = { level = "warn", priority = 3 }
+str_to_string = { level = "warn", priority = 3 }
+string_to_string = { level = "warn", priority = 3 }
+tests_outside_test_module = { level = "warn", priority = 3 }
+unnecessary_self_imports = { level = "warn", priority = 3 }
+unneeded_field_pattern = { level = "warn", priority = 3 }
+todo = { level = "warn", priority = 3 }
+unimplemented = { level = "warn", priority = 3 }
+unreachable = { level = "warn", priority = 3 }
+unseparated_literal_suffix = { level = "warn", priority = 3 }
+unwrap_in_result = { level = "warn", priority = 3 }
+
+# other groups
+pedantic = { level = "warn", priority = 2 }
+nursery = { level ="warn", priority = 1 }
+cargo = { level = "warn", priority = 0 }
+
+# allow list
+needless_return = { level = "allow", priority = 6 }
+#question_mark_used = "allow"

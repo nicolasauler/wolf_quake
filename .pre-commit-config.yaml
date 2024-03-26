@@ -3,9 +3,10 @@ repos:
     rev: v4.5.0
     hooks:
     - id: check-yaml
+    - id: check-toml
+    - id: detect-private-key
     - id: end-of-file-fixer
     - id: trailing-whitespace
-    - id: detect-private-key
   - repo: local
     hooks:
     - id: rust-formatting
@@ -18,7 +19,14 @@ repos:
     - id: rust-clippy
       name: Rust clippy
       description: Run cargo clippy on files included in the commit. clippy should be installed before-hand.
-      entry: cargo clippy --all -- -D warnings
+      entry: cargo clippy --all -- -D warnings -D dead-code # only want dead code problems in CI and pre-commit
+      pass_filenames: false
+      types: [file, rust]
+      language: system
+    - id: msrv
+      name: Minimum Supported Rust Version (MSRV)
+      description: Check if the project can be built with the oldest supported Rust version. cargo-msrv should be installed before-hand.
+      entry: cargo msrv verify
       pass_filenames: false
       types: [file, rust]
       language: system

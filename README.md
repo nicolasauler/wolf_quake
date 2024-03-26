@@ -10,6 +10,9 @@
     <a href="https://dl.circleci.com/status-badge/redirect/gh/nicolasauler/wolf_quake/tree/main">
         <img src="https://dl.circleci.com/status-badge/img/gh/nicolasauler/wolf_quake/tree/main.svg?style=shield&circle-token=CCIPRJ_GZJrRHrrjus3Jhk7LbZQ2s_66ce6241308ef46b8fb0db9f3da02230e410eb78" />
     </a>
+    <a href="https://github.com/nicolasauler/wolf_quake/"
+        <img src="https://img.shields.io/badge/MSRV-1.58.1-informational" />
+    </a>
 </div>
 
 ## 🏞️ Overview
