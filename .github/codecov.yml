@@ -1,0 +1,12 @@
+# ref: https://docs.codecov.com/docs/codecovyml-reference
+coverage:
+  status:
+    project:
+      default:
+        target: 80%    # the required coverage value
+        threshold: 1%  # the leniency in hitting the target
+
+
+# Test files aren't important for coverage
+ignore:
+  - "tests"
