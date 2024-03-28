@@ -1,7 +1,6 @@
 //! Quake 3 log parser
 
 #![cfg_attr(coverage_nightly, feature(coverage_attribute))]
-#![allow(dead_code)]
 
 use std::{collections::HashMap, fmt::Display, fs, path::Path};
 
@@ -108,27 +107,6 @@ impl Display for MeanDeath {
             Self::Grapple => write!(f, "Grapple"),
         }
     }
-}
-
-#[derive(Debug)]
-enum LogEvent {
-    InitGame,
-    ClientConnect {
-        client_id: u32,
-    },
-    ClientUserinfoChanged {
-        client_id: u32,
-        name: String,
-    },
-    Kill {
-        killer_id: u32,
-        killed_id: u32,
-        mean_id: u32,
-        killer_name: String,
-        killed_name: String,
-        mean_name: MeanDeath,
-    },
-    ShutdownGame,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -330,12 +308,18 @@ fn scan_file(filepath: &Path) -> Result<Vec<Game>, ParsingError> {
 /// main function
 fn main() {
     let filepath = Path::new("./static/qgames.log");
-    let games = match scan_file(filepath) {
+    let games: Vec<Game> = match scan_file(filepath) {
         Ok(games) => games,
         Err(err) => {
             eprintln!("Error parsing file {filepath:?}: {err}");
             return;
         }
     };
-    println!("{games:#?}");
+
+    for game in games {
+        let total_kills = game.total_kills;
+        println!("Total kills: {total_kills:?}");
+        let players_data = game.players_data;
+        println!("Players data: {players_data:?}");
+    }
 }
