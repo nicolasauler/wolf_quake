@@ -137,7 +137,10 @@ mod tests {
     }
 
     prop_compose! {
-        fn arb_players()(player_data in arb_player_data())(name in "[a-z]*", kills in 0..player_data.kills, player_data in Just(player_data)) -> (PlayerData, PlayerData) {
+        fn arb_players()
+        (player_data in arb_player_data())
+        (name in "[a-z]*", kills in 0..player_data.kills, player_data in Just(player_data))
+        -> (PlayerData, PlayerData) {
             (player_data, PlayerData { name, kills })
         }
     }

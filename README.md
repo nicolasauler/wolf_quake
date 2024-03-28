@@ -40,10 +40,15 @@ Documentation can be found in:
 ## 🦺 Security and 💻 Software
 
 Wolf Quake is written in Rust :crab: and uses `#![forbid(unsafe_code)]` to ensure everything is implemented in 100% safe Rust.
+It also heavily applies clippy lints to ensure the code is idiomatic and follows best practices.
 
 Current status:
 - [x] Enviroment setup: CI, local and github
-- [ ] Development
+- [-] Happy path log parsing and tests
+- [ ] CLI
+- [ ] Bug handling in original log file
+
+For testing, Wolf Quake uses the [proptest](https://docs.rs/proptest/latest/proptest/) crate, which is kind of a more purpose-oriented fuzzy testing tool.
 
 ## ⚗️ Contributing
 ### Install pre-commit

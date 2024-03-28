@@ -141,3 +141,134 @@ pub fn scan_file(filepath: &Path) -> Result<Vec<Game>, ParsingError> {
 
     Ok(games)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use proptest::prelude::*;
+
+    prop_compose! {
+        fn arb_player_data()(name in "[a-z]*", kills in any::<u32>()) -> PlayerData {
+            PlayerData { name, kills }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_parse_client_connect(
+            client_connect_line in (any::<u32>().prop_map(|v| v.to_string())),
+            mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10)
+        ) {
+            let mut parts = client_connect_line.split_whitespace();
+            let client_id = parts.clone().next().unwrap().parse::<u32>().unwrap();
+
+            if players_data.contains_key(&client_id) {
+                let result = parse_client_connect(&mut parts, &mut players_data);
+                prop_assert!(result.is_ok());
+                prop_assert!(players_data.contains_key(&client_id));
+                prop_assert_ne!(players_data.get(&client_id).unwrap(), &PlayerData { name: "unknown".to_owned(), kills: 0 });
+            }
+            else {
+                let result = parse_client_connect(&mut parts, &mut players_data);
+                prop_assert!(result.is_ok());
+                prop_assert!(players_data.contains_key(&client_id));
+                prop_assert_eq!(players_data.get(&client_id).unwrap(), &PlayerData { name: "unknown".to_owned(), kills: 0 });
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_parse_client_connect_part_not_found(
+            client_connect_line in "\\s*",
+            mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10)
+        ) {
+            let mut parts = client_connect_line.split_whitespace();
+
+            let result = parse_client_connect(&mut parts, &mut players_data);
+            match result {
+                Err(ParsingError::NotFound(_)) => {},
+                _ => prop_assert!(false),
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_parse_client_connect_parseint_error(
+            client_connect_line in "[^\\d\\s]+", // match everything that is not a digit or a whitespace
+            mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10)
+        ) {
+            let mut parts = client_connect_line.split_whitespace();
+
+            let result = parse_client_connect(&mut parts, &mut players_data);
+            match result {
+                Err(ParsingError::ParseIntError(_)) => {},
+                _ => {
+                    prop_assert!(false)
+                },
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_parse_user_info(
+            client_id in any::<u32>(),
+            two_chars in "[\\S]{2}",
+            name in "\\w*",
+            rest in "\\PC*",
+            mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10)
+        ) {
+            let user_info_line = format!("{} {}{}\\{}", client_id, two_chars, name, rest);
+            players_data.insert(client_id, PlayerData { name: "unknown".to_owned(), kills: 0 });
+
+            let mut parts = user_info_line.split_whitespace();
+            let client_id = parts.clone().next().unwrap().parse::<u32>().unwrap();
+
+            let result = parse_user_info(&mut parts, &mut players_data);
+            prop_assert!(result.is_ok());
+            prop_assert!(players_data.contains_key(&client_id));
+            prop_assert_ne!(players_data.get(&client_id).unwrap(), &PlayerData { name: "unknown".to_owned(), kills: 0 });
+            prop_assert_eq!(players_data.get(&client_id).unwrap(), &PlayerData { name: name.to_owned(), kills: 0 });
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_parse_user_info_part_not_found(
+            user_info_line in "\\s*",
+            mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10)
+        ) {
+            let mut parts = user_info_line.split_whitespace();
+
+            let result = parse_user_info(&mut parts, &mut players_data);
+            match result {
+                Err(ParsingError::NotFound(_)) => {},
+                _ => prop_assert!(false),
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_parse_user_info_parseint_error(
+            client_id in "[^\\d\\s]+", // match everything that is not a digit or a whitespace
+            two_chars in "\\PC*",
+            name in "\\PC*",
+            rest in "\\PC*",
+            mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10)
+        ) {
+            let user_info_line = format!("{} {}{}\\{}", client_id, two_chars, name, rest);
+            let mut parts = user_info_line.split_whitespace();
+
+            let result = parse_user_info(&mut parts, &mut players_data);
+            match result {
+                Err(ParsingError::ParseIntError(_)) => {},
+                _ => {
+                    prop_assert!(false)
+                },
+            }
+        }
+    }
+}
