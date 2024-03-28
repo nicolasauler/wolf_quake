@@ -20,7 +20,7 @@
         <img src="https://codecov.io/gh/nicolasauler/wolf_quake/graph/badge.svg?token=OW4V0Q9Y2F"/>
     </a>
     <a href="https://github.com/nicolasauler/wolf_quake">
-        <img src="https://img.shields.io/badge/MSRV-1.58.1-informational" />
+        <img src="https://img.shields.io/badge/MSRV-1.60.0-informational" />
     </a>
 </div>
 

@@ -20,7 +20,7 @@ impl Ord for PlayerData {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MeanDeath {
     Unknown,
     Shotgun,
@@ -122,5 +122,112 @@ impl Display for MeanDeath {
             Self::Juiced => write!(f, "Juiced"),
             Self::Grapple => write!(f, "Grapple"),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use proptest::prelude::*;
+
+    prop_compose! {
+        fn arb_player_data()(name in "[a-z]*", kills in any::<u32>()) -> PlayerData {
+            PlayerData { name, kills }
+        }
+    }
+
+    prop_compose! {
+        fn arb_players()(player_data in arb_player_data())(name in "[a-z]*", kills in 0..player_data.kills, player_data in Just(player_data)) -> (PlayerData, PlayerData) {
+            (player_data, PlayerData { name, kills })
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_player_data_ordering((a_player, other_player) in arb_players()) {
+            prop_assert!(a_player > other_player);
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_player_data_ordering_follows_kills((a_player, other_player) in arb_players()) {
+            prop_assert_eq!(a_player.cmp(&other_player), a_player.kills.cmp(&other_player.kills));
+        }
+    }
+
+    fn a_random_enum() -> impl Strategy<Value = MeanDeath> {
+        prop_oneof![
+            Just(MeanDeath::Unknown),
+            Just(MeanDeath::Shotgun),
+            Just(MeanDeath::Gauntlet),
+            Just(MeanDeath::Machinegun),
+            Just(MeanDeath::Grenade),
+            Just(MeanDeath::GrenadeSplash),
+            Just(MeanDeath::Rocket),
+            Just(MeanDeath::RocketSplash),
+            Just(MeanDeath::Plasma),
+            Just(MeanDeath::PlasmaSplash),
+            Just(MeanDeath::Railgun),
+            Just(MeanDeath::Lightning),
+            Just(MeanDeath::Bfg),
+            Just(MeanDeath::BfgSplash),
+            Just(MeanDeath::Water),
+            Just(MeanDeath::Slime),
+            Just(MeanDeath::Lava),
+            Just(MeanDeath::Crush),
+            Just(MeanDeath::Telefrag),
+            Just(MeanDeath::Falling),
+            Just(MeanDeath::Suicide),
+            Just(MeanDeath::TargetLaser),
+            Just(MeanDeath::TriggerHurt),
+            Just(MeanDeath::Nail),
+            Just(MeanDeath::Chaingun),
+            Just(MeanDeath::ProximityMine),
+            Just(MeanDeath::Kamikaze),
+            Just(MeanDeath::Juiced),
+            Just(MeanDeath::Grapple),
+        ]
+    }
+
+    proptest! {
+        #[test]
+        fn test_mean_death_from_u32(mean in a_random_enum()) {
+            let mean_number = mean.clone() as u32;
+            prop_assert_eq!(MeanDeath::from(mean_number), mean);
+        }
+    }
+
+    #[test]
+    fn test_display_mean_death() {
+        assert_eq!(MeanDeath::Unknown.to_string(), "Unknown");
+        assert_eq!(MeanDeath::Shotgun.to_string(), "Shotgun");
+        assert_eq!(MeanDeath::Gauntlet.to_string(), "Gauntlet");
+        assert_eq!(MeanDeath::Machinegun.to_string(), "Machinegun");
+        assert_eq!(MeanDeath::Grenade.to_string(), "Grenade");
+        assert_eq!(MeanDeath::GrenadeSplash.to_string(), "Grenade Splash");
+        assert_eq!(MeanDeath::Rocket.to_string(), "Rocket");
+        assert_eq!(MeanDeath::RocketSplash.to_string(), "Rocket Splash");
+        assert_eq!(MeanDeath::Plasma.to_string(), "Plasma");
+        assert_eq!(MeanDeath::PlasmaSplash.to_string(), "Plasma Splash");
+        assert_eq!(MeanDeath::Railgun.to_string(), "Railgun");
+        assert_eq!(MeanDeath::Lightning.to_string(), "Lightning");
+        assert_eq!(MeanDeath::Bfg.to_string(), "Bfg");
+        assert_eq!(MeanDeath::BfgSplash.to_string(), "Bfg Splash");
+        assert_eq!(MeanDeath::Water.to_string(), "Water");
+        assert_eq!(MeanDeath::Slime.to_string(), "Slime");
+        assert_eq!(MeanDeath::Lava.to_string(), "Lava");
+        assert_eq!(MeanDeath::Crush.to_string(), "Crush");
+        assert_eq!(MeanDeath::Telefrag.to_string(), "Telefrag");
+        assert_eq!(MeanDeath::Falling.to_string(), "Falling");
+        assert_eq!(MeanDeath::Suicide.to_string(), "Suicide");
+        assert_eq!(MeanDeath::TargetLaser.to_string(), "TargetLaser");
+        assert_eq!(MeanDeath::TriggerHurt.to_string(), "TriggerHurt");
+        assert_eq!(MeanDeath::Nail.to_string(), "Nail");
+        assert_eq!(MeanDeath::Chaingun.to_string(), "Chaingun");
+        assert_eq!(MeanDeath::ProximityMine.to_string(), "ProximityMine");
+        assert_eq!(MeanDeath::Kamikaze.to_string(), "Kamikaze");
+        assert_eq!(MeanDeath::Juiced.to_string(), "Juiced");
+        assert_eq!(MeanDeath::Grapple.to_string(), "Grapple");
     }
 }

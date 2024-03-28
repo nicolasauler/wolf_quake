@@ -8,9 +8,12 @@ license = "MIT OR Apache-2.0"
 keywords = ["parser", "cli", "quake"]
 categories = ["command-line-utilities", "parsing"]
 edition = "2021"
-rust-version = "1.58.1"
+rust-version = "1.60.0"
 
 [dependencies]
+
+[dev-dependencies]
+proptest = "1.4.0"
 
 [lints.rust]
 unsafe_code = { level = "forbid", priority = 3 }
