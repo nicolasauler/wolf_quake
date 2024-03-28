@@ -18,7 +18,7 @@ where
 {
     let client_id = parts
         .next()
-        .ok_or_else(|| ParsingError::NotFound("client_id".to_owned()))?
+        .ok_or_else(|| ParsingError::LogPartNotFound("client_id".to_owned()))?
         .parse::<u32>()?;
     players_data.entry(client_id).or_insert_with(|| PlayerData {
         name: "unknown".to_owned(),
@@ -39,7 +39,7 @@ where
 {
     let client_id = parts
         .next()
-        .ok_or_else(|| ParsingError::NotFound("client_id".to_owned()))?
+        .ok_or_else(|| ParsingError::LogPartNotFound("client_id".to_owned()))?
         .parse::<u32>()?;
     let name = parts.collect::<Vec<&str>>().join(" ");
     let name = name
@@ -71,25 +71,32 @@ where
 {
     let killer_id = parts
         .next()
-        .ok_or_else(|| ParsingError::NotFound("killer_id".to_owned()))?
+        .ok_or_else(|| ParsingError::LogPartNotFound("killer_id".to_owned()))?
         .parse::<u32>()?;
     let victim_id = parts
         .next()
-        .ok_or_else(|| ParsingError::NotFound("victim_id".to_owned()))?
+        .ok_or_else(|| ParsingError::LogPartNotFound("victim_id".to_owned()))?
         .parse::<u32>()?;
 
     let mean_id_text = parts
         .next()
-        .ok_or_else(|| ParsingError::NotFound("mean_id".to_owned()))?;
+        .ok_or_else(|| ParsingError::LogPartNotFound("mean_id".to_owned()))?;
     // removing the last character (that is a colon) from the mean_id_text
+    if mean_id_text.len() <= 1 {
+        return Err(ParsingError::LogPartNotFound("mean_id".to_owned()));
+    }
     let mean_id = mean_id_text[..mean_id_text.len().saturating_sub(1)].parse::<u32>()?;
     total_kills.push(MeanDeath::from(mean_id));
 
     if killer_id == WORLD_ID {
-        let data = players_data.get_mut(&victim_id).expect("Player not found");
+        let data = players_data
+            .get_mut(&victim_id)
+            .ok_or_else(|| ParsingError::UnexpectedError("Victim not found".to_owned()))?;
         data.kills = data.kills.saturating_sub(1);
     } else {
-        let data = players_data.get_mut(&killer_id).expect("Player not found");
+        let data = players_data
+            .get_mut(&killer_id)
+            .ok_or_else(|| ParsingError::UnexpectedError("Killer not found".to_owned()))?;
         data.kills = data.kills.saturating_add(1);
     }
 
@@ -111,10 +118,10 @@ pub fn scan_file(filepath: &Path) -> Result<Vec<Game>, ParsingError> {
         let (_time, event) = (
             parts
                 .next()
-                .ok_or_else(|| ParsingError::NotFound("timestamp".to_owned()))?,
+                .ok_or_else(|| ParsingError::LogPartNotFound("timestamp".to_owned()))?,
             parts
                 .next()
-                .ok_or_else(|| ParsingError::NotFound("event".to_owned()))?,
+                .ok_or_else(|| ParsingError::LogPartNotFound("event".to_owned()))?,
         );
 
         match event {
@@ -187,7 +194,7 @@ mod tests {
 
             let result = parse_client_connect(&mut parts, &mut players_data);
             match result {
-                Err(ParsingError::NotFound(_)) => {},
+                Err(ParsingError::LogPartNotFound(_)) => {},
                 _ => prop_assert!(false),
             }
         }
@@ -244,7 +251,7 @@ mod tests {
 
             let result = parse_user_info(&mut parts, &mut players_data);
             match result {
-                Err(ParsingError::NotFound(_)) => {},
+                Err(ParsingError::LogPartNotFound(_)) => {},
                 _ => prop_assert!(false),
             }
         }
@@ -268,6 +275,250 @@ mod tests {
                 _ => {
                     prop_assert!(false)
                 },
+            }
+        }
+    }
+
+    fn a_random_mean_death() -> impl Strategy<Value = MeanDeath> {
+        prop_oneof![
+            Just(MeanDeath::Unknown),
+            Just(MeanDeath::Shotgun),
+            Just(MeanDeath::Gauntlet),
+            Just(MeanDeath::Machinegun),
+            Just(MeanDeath::Grenade),
+            Just(MeanDeath::GrenadeSplash),
+            Just(MeanDeath::Rocket),
+            Just(MeanDeath::RocketSplash),
+            Just(MeanDeath::Plasma),
+            Just(MeanDeath::PlasmaSplash),
+            Just(MeanDeath::Railgun),
+            Just(MeanDeath::Lightning),
+            Just(MeanDeath::Bfg),
+            Just(MeanDeath::BfgSplash),
+            Just(MeanDeath::Water),
+            Just(MeanDeath::Slime),
+            Just(MeanDeath::Lava),
+            Just(MeanDeath::Crush),
+            Just(MeanDeath::Telefrag),
+            Just(MeanDeath::Falling),
+            Just(MeanDeath::Suicide),
+            Just(MeanDeath::TargetLaser),
+            Just(MeanDeath::TriggerHurt),
+            Just(MeanDeath::Nail),
+            Just(MeanDeath::Chaingun),
+            Just(MeanDeath::ProximityMine),
+            Just(MeanDeath::Kamikaze),
+            Just(MeanDeath::Juiced),
+            Just(MeanDeath::Grapple),
+        ]
+    }
+
+    proptest! {
+        #[test]
+        fn test_parse_kill(
+            killer_id in any::<u32>(),
+            victim_id in any::<u32>(),
+            mean_id in 0..28u32,
+            rest in "\\PC*",
+            mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10),
+            mut total_kills in prop::collection::vec(a_random_mean_death(), 1),
+        ) {
+            let kill_line = format!("{} {} {}: {}", killer_id, victim_id, mean_id, rest);
+            players_data.insert(killer_id, PlayerData { name: "unknown".to_owned(), kills: 0 });
+            players_data.insert(victim_id, PlayerData { name: "unknown".to_owned(), kills: 1 });
+
+            let mut parts = kill_line.split_whitespace();
+            let killer_id = parts.clone().next().unwrap().parse::<u32>().unwrap();
+            let victim_id = parts.clone().nth(1).unwrap().parse::<u32>().unwrap();
+            let mean_text = parts.clone().nth(2).unwrap();
+            // remove the last character (that is a colon) from the mean_text
+            let mean_id = mean_text[..mean_text.len().saturating_sub(1)].parse::<u32>().unwrap();
+
+            let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
+            prop_assert!(result.is_ok());
+
+            if killer_id == WORLD_ID {
+                prop_assert_eq!(players_data.get(&victim_id).unwrap().kills, 0);
+            }
+            else {
+                prop_assert_eq!(players_data.get(&killer_id).unwrap().kills, 1);
+            }
+
+            prop_assert_eq!(total_kills.len(), 2);
+            prop_assert_eq!(total_kills.last().unwrap(), &MeanDeath::from(mean_id));
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_parse_kill_mean_id_not_found(
+            killer_id in any::<u32>(),
+            victim_id in any::<u32>(),
+            mean_id in "\\s*",
+            rest in "\\PC*",
+            mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10),
+            mut total_kills in prop::collection::vec(a_random_mean_death(), 0..10),
+        ) {
+            let kill_line = format!("{} {} {}: {}", killer_id, victim_id, mean_id, rest);
+            let mut parts = kill_line.split_whitespace();
+
+            let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
+            match result {
+                Err(ParsingError::LogPartNotFound(_)) => {},
+                _ => prop_assert!(false),
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_parse_kill_victim_id_not_found(
+            killer_id in any::<u32>(),
+            victim_id in "\\s*",
+            mean_id in 0..28u32,
+            rest in "\\PC*",
+            mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10),
+            mut total_kills in prop::collection::vec(a_random_mean_death(), 0..10),
+        ) {
+            let kill_line = format!("{} {} {}: {}", killer_id, victim_id, mean_id, rest);
+            let mut parts = kill_line.split_whitespace();
+
+            let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
+            match result {
+                Err(ParsingError::ParseIntError(_)) => {},
+                _ => prop_assert!(false),
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_parse_kill_killer_id_not_found(
+            killer_id in "\\s*",
+            victim_id in any::<u32>(),
+            mean_id in 0..28u32,
+            rest in "\\PC*",
+            mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10),
+            mut total_kills in prop::collection::vec(a_random_mean_death(), 0..10),
+        ) {
+            let kill_line = format!("{} {} {}: {}", killer_id, victim_id, mean_id, rest);
+            let mut parts = kill_line.split_whitespace();
+
+            let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
+            match result {
+                Err(ParsingError::ParseIntError(_)) => {},
+                _ => prop_assert!(false),
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_parse_kill_mean_id_parseint_error(
+            killer_id in any::<u32>(),
+            victim_id in any::<u32>(),
+            mean_id in "[^\\d\\s]+", // match everything that is not a digit or a whitespace
+            rest in "\\PC*",
+            mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10),
+            mut total_kills in prop::collection::vec(a_random_mean_death(), 0..10),
+        ) {
+            let kill_line = format!("{} {} {}: {}", killer_id, victim_id, mean_id, rest);
+            let mut parts = kill_line.split_whitespace();
+
+            let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
+            match result {
+                Err(ParsingError::ParseIntError(_)) => {},
+                _ => prop_assert!(false),
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_parse_kill_victim_id_parseint_error(
+            killer_id in any::<u32>(),
+            victim_id in "[^\\d\\s]+", // match everything that is not a digit or a whitespace
+            mean_id in 0..28u32,
+            rest in "\\PC*",
+            mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10),
+            mut total_kills in prop::collection::vec(a_random_mean_death(), 0..10),
+        ) {
+            let kill_line = format!("{} {} {}: {}", killer_id, victim_id, mean_id, rest);
+            let mut parts = kill_line.split_whitespace();
+
+            let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
+            match result {
+                Err(ParsingError::ParseIntError(_)) => {},
+                _ => prop_assert!(false),
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_parse_kill_killer_id_parseint_error(
+            killer_id in "[^\\d\\s]+", // match everything that is not a digit or a whitespace
+            victim_id in any::<u32>(),
+            mean_id in 0..28u32,
+            rest in "\\PC*",
+            mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10),
+            mut total_kills in prop::collection::vec(a_random_mean_death(), 0..10),
+        ) {
+            let kill_line = format!("{} {} {}: {}", killer_id, victim_id, mean_id, rest);
+            let mut parts = kill_line.split_whitespace();
+
+            let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
+            match result {
+                Err(ParsingError::ParseIntError(_)) => {},
+                _ => prop_assert!(false),
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_parse_kill_killer_not_found_unexpected_error(
+            killer_id in any::<u32>(),
+            victim_id in any::<u32>(),
+            mean_id in 0..28u32,
+            rest in "\\PC*",
+            mut total_kills in prop::collection::vec(a_random_mean_death(), 0..10),
+        ) {
+            prop_assume!(killer_id != victim_id);
+
+            let mut players_data: HashMap<u32, PlayerData> = HashMap::new();
+            players_data.insert(victim_id, PlayerData { name: "unknown".to_owned(), kills: 1 });
+            let kill_line = format!("{} {} {}: {}", killer_id, victim_id, mean_id, rest);
+            let mut parts = kill_line.split_whitespace();
+
+            let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
+            match result {
+                Err(ParsingError::UnexpectedError(_)) => {},
+                _ => prop_assert!(false),
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_parse_kill_victim_not_found_unexpected_error(
+            victim_id in any::<u32>(),
+            mean_id in 0..28u32,
+            rest in "\\PC*",
+            mut total_kills in prop::collection::vec(a_random_mean_death(), 0..10),
+        ) {
+            let killer_id = WORLD_ID;
+            prop_assume!(killer_id != victim_id);
+
+            let mut players_data: HashMap<u32, PlayerData> = HashMap::new();
+            players_data.insert(killer_id, PlayerData { name: "unknown".to_owned(), kills: 1 });
+            let kill_line = format!("{} {} {}: {}", killer_id, victim_id, mean_id, rest);
+            let mut parts = kill_line.split_whitespace();
+
+            let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
+            match result {
+                Err(ParsingError::UnexpectedError(_)) => {},
+                _ => prop_assert!(false),
             }
         }
     }
