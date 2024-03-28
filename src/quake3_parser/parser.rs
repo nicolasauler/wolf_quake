@@ -18,7 +18,7 @@ where
 {
     let client_id = parts
         .next()
-        .ok_or(ParsingError::NotFound("client_id".to_owned()))?
+        .ok_or_else(|| ParsingError::NotFound("client_id".to_owned()))?
         .parse::<u32>()?;
     players_data.entry(client_id).or_insert_with(|| PlayerData {
         name: "unknown".to_owned(),
@@ -39,7 +39,7 @@ where
 {
     let client_id = parts
         .next()
-        .ok_or(ParsingError::NotFound("client_id".to_owned()))?
+        .ok_or_else(|| ParsingError::NotFound("client_id".to_owned()))?
         .parse::<u32>()?;
     let name = parts.collect::<Vec<&str>>().join(" ");
     let name = name
@@ -71,16 +71,16 @@ where
 {
     let killer_id = parts
         .next()
-        .ok_or(ParsingError::NotFound("killer_id".to_owned()))?
+        .ok_or_else(|| ParsingError::NotFound("killer_id".to_owned()))?
         .parse::<u32>()?;
     let victim_id = parts
         .next()
-        .ok_or(ParsingError::NotFound("victim_id".to_owned()))?
+        .ok_or_else(|| ParsingError::NotFound("victim_id".to_owned()))?
         .parse::<u32>()?;
 
     let mean_id_text = parts
         .next()
-        .ok_or(ParsingError::NotFound("mean_id".to_owned()))?;
+        .ok_or_else(|| ParsingError::NotFound("mean_id".to_owned()))?;
     // removing the last character (that is a colon) from the mean_id_text
     let mean_id = mean_id_text[..mean_id_text.len().saturating_sub(1)].parse::<u32>()?;
     total_kills.push(MeanDeath::from(mean_id));
@@ -111,10 +111,10 @@ pub fn scan_file(filepath: &Path) -> Result<Vec<Game>, ParsingError> {
         let (_time, event) = (
             parts
                 .next()
-                .ok_or(ParsingError::NotFound("timestamp".to_owned()))?,
+                .ok_or_else(|| ParsingError::NotFound("timestamp".to_owned()))?,
             parts
                 .next()
-                .ok_or(ParsingError::NotFound("event".to_owned()))?,
+                .ok_or_else(|| ParsingError::NotFound("event".to_owned()))?,
         );
 
         match event {

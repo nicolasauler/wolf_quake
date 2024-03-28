@@ -75,8 +75,7 @@ unwrap_in_result = { level = "warn", priority = 3 }
 # other groups
 pedantic = { level = "warn", priority = 2 }
 nursery = { level ="warn", priority = 1 }
-#### DEV BRANCH ONLY
-# cargo = { level = "warn", priority = 0 }
+cargo = { level = "warn", priority = 0 }
 
 # allow list
 needless_return = { level = "allow", priority = 6 }

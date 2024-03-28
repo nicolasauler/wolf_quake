@@ -156,7 +156,7 @@ mod tests {
         }
     }
 
-    fn a_random_enum() -> impl Strategy<Value = MeanDeath> {
+    fn a_random_mean_death() -> impl Strategy<Value = MeanDeath> {
         prop_oneof![
             Just(MeanDeath::Unknown),
             Just(MeanDeath::Shotgun),
@@ -192,7 +192,7 @@ mod tests {
 
     proptest! {
         #[test]
-        fn test_mean_death_from_u32(mean in a_random_enum()) {
+        fn test_mean_death_from_u32(mean in a_random_mean_death()) {
             let mean_number = mean.clone() as u32;
             prop_assert_eq!(MeanDeath::from(mean_number), mean);
         }
