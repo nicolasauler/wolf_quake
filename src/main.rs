@@ -3,10 +3,9 @@
 #![cfg_attr(coverage_nightly, feature(coverage_attribute))]
 #![allow(dead_code)]
 
-use serde::{Serialize, Serializer};
 use std::{collections::HashMap, fmt::Display, fs, path::Path};
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Clone)]
 enum MeanDeath {
     Unknown,
     Shotgun,
@@ -132,7 +131,7 @@ enum LogEvent {
     ShutdownGame,
 }
 
-#[derive(Debug, Serialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct PlayerData {
     name: String,
     kills: u32,
@@ -150,32 +149,157 @@ impl Ord for PlayerData {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 struct Game {
-    #[serde(serialize_with = "len_serialize")]
     total_kills: Vec<MeanDeath>,
     players_data: HashMap<u32, PlayerData>,
 }
 
-fn len_serialize<S>(v: &[MeanDeath], s: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    s.serialize_u64(v.len().try_into().unwrap())
-}
-
 const WORLD_ID: u32 = 1022;
 
-fn scan_file(filepath: &Path) -> Result<Vec<Game>, std::io::Error> {
-    let log_str = fs::read_to_string(filepath).expect("Unable to read file");
+/// parses the `ClientConnect` event and initializes the `players_data`
+fn parse_client_connect<'part, I>(
+    parts: &mut I,
+    players_data: &mut HashMap<u32, PlayerData>,
+) -> Result<(), ParsingError>
+where
+    I: Iterator<Item = &'part str>,
+{
+    let client_id = parts
+        .next()
+        .ok_or(ParsingError::NotFound("client_id".to_owned()))?
+        .parse::<u32>()?;
+    players_data.entry(client_id).or_insert_with(|| PlayerData {
+        name: "unknown".to_owned(),
+        kills: 0,
+    });
+
+    Ok(())
+}
+
+/// parses the `ClientUserinfoChanged` event and updates the `players_data`
+/// with the player name
+fn parse_user_info<'part, I>(
+    parts: &mut I,
+    players_data: &mut HashMap<u32, PlayerData>,
+) -> Result<(), ParsingError>
+where
+    I: Iterator<Item = &'part str>,
+{
+    let client_id = parts
+        .next()
+        .ok_or(ParsingError::NotFound("client_id".to_owned()))?
+        .parse::<u32>()?;
+    let name = parts.collect::<Vec<&str>>().join(" ");
+    let name = name
+        .chars()
+        .skip(2)
+        .take_while(|&c| c != '\\')
+        .collect::<String>();
+    players_data
+        .get_mut(&client_id)
+        .expect("Player not found")
+        .name = name;
+
+    Ok(())
+}
+
+enum ParsingError {
+    /// When an expected value from the log is not found
+    /// (e.g. the `mean_id` in the Kill event)
+    NotFound(String),
+    /// When the parsing of a u32 fails
+    /// (e.g. when parsing the `killer_id` in the Kill event)
+    /// (`std::num::ParseIntError`)
+    ParseIntError(std::num::ParseIntError),
+    /// When an IO error occurs
+    /// (e.g. when reading the file, if the filepath is invalid)
+    IoError(std::io::Error),
+}
+
+impl From<std::num::ParseIntError> for ParsingError {
+    fn from(err: std::num::ParseIntError) -> Self {
+        Self::ParseIntError(err)
+    }
+}
+
+impl From<std::io::Error> for ParsingError {
+    fn from(err: std::io::Error) -> Self {
+        Self::IoError(err)
+    }
+}
+
+impl Display for ParsingError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NotFound(s) => write!(f, "Not found: {s}"),
+            Self::ParseIntError(err) => write!(f, "ParseIntError: {err}"),
+            Self::IoError(err) => write!(f, "IoError: {err}"),
+        }
+    }
+}
+
+/// parses the Kill event and updates the `players_data`
+/// with the number of kills
+/// as well as the `total_kills` vector with the mean of death
+///
+/// can error if the parsing of the u32 fails (`std::num::ParseIntError`)
+///
+fn parse_kill<'part, I>(
+    parts: &mut I,
+    players_data: &mut HashMap<u32, PlayerData>,
+    total_kills: &mut Vec<MeanDeath>,
+) -> Result<(), ParsingError>
+where
+    I: Iterator<Item = &'part str>,
+{
+    let killer_id = parts
+        .next()
+        .ok_or(ParsingError::NotFound("killer_id".to_owned()))?
+        .parse::<u32>()?;
+    let victim_id = parts
+        .next()
+        .ok_or(ParsingError::NotFound("victim_id".to_owned()))?
+        .parse::<u32>()?;
+
+    let mean_id_text = parts
+        .next()
+        .ok_or(ParsingError::NotFound("mean_id".to_owned()))?;
+    // removing the last character (that is a colon) from the mean_id_text
+    let mean_id = mean_id_text[..mean_id_text.len().saturating_sub(1)].parse::<u32>()?;
+    total_kills.push(MeanDeath::from(mean_id));
+
+    if killer_id == WORLD_ID {
+        let data = players_data.get_mut(&victim_id).expect("Player not found");
+        data.kills = data.kills.saturating_sub(1);
+    } else {
+        let data = players_data.get_mut(&killer_id).expect("Player not found");
+        data.kills = data.kills.saturating_add(1);
+    }
+
+    Ok(())
+}
+
+/// scans the file and returns a vector of games
+/// each game contains a vector of `total_kills` and a hashmap of `players_data`
+/// the `players_data` hashmap contains the player id as key and the player data as value
+fn scan_file(filepath: &Path) -> Result<Vec<Game>, ParsingError> {
+    let log_str = fs::read_to_string(filepath)?;
+
     let mut games: Vec<Game> = Vec::new();
     let mut total_kills: Vec<MeanDeath> = Vec::new();
     let mut players_data: HashMap<u32, PlayerData> = HashMap::new();
 
     for line in log_str.lines() {
         let mut parts = line.split_whitespace();
-        let _time = parts.next().unwrap();
-        let event = parts.next().unwrap();
+        let (_time, event) = (
+            parts
+                .next()
+                .ok_or(ParsingError::NotFound("timestamp".to_owned()))?,
+            parts
+                .next()
+                .ok_or(ParsingError::NotFound("event".to_owned()))?,
+        );
 
         match event {
             "ShutdownGame:" => {
@@ -187,46 +311,13 @@ fn scan_file(filepath: &Path) -> Result<Vec<Game>, std::io::Error> {
                 total_kills.clear();
             }
             "ClientConnect:" => {
-                let client_id = parts.next().unwrap().parse::<u32>().unwrap();
-                players_data.insert(
-                    client_id,
-                    PlayerData {
-                        name: "unknown".to_owned(),
-                        kills: 0,
-                    },
-                );
+                parse_client_connect(&mut parts, &mut players_data)?;
             }
             "ClientUserinfoChanged:" => {
-                let client_id = parts.next().unwrap().parse::<u32>().unwrap();
-                let name = parts.collect::<Vec<&str>>().join(" ");
-                let name = name
-                    .chars()
-                    .skip(2)
-                    .take_while(|&c| c != '\\')
-                    .collect::<String>();
-                players_data
-                    .get_mut(&client_id)
-                    .expect("Player not found")
-                    .name = name;
+                parse_user_info(&mut parts, &mut players_data)?;
             }
             "Kill:" => {
-                let killer_id = parts.next().unwrap().parse::<u32>().unwrap();
-                let victim_id = parts.next().unwrap().parse::<u32>().unwrap();
-
-                let mean_id_text = parts.next().unwrap();
-                // removing the last character (that is a colon) from the mean_id_text
-                let mean_id = mean_id_text[..mean_id_text.len().saturating_sub(1)]
-                    .parse::<u32>()
-                    .unwrap();
-                total_kills.push(MeanDeath::from(mean_id));
-
-                if killer_id == WORLD_ID {
-                    let data = players_data.get_mut(&victim_id).expect("Player not found");
-                    data.kills = data.kills.saturating_sub(1);
-                } else {
-                    let data = players_data.get_mut(&killer_id).expect("Player not found");
-                    data.kills = data.kills.saturating_add(1);
-                }
+                parse_kill(&mut parts, &mut players_data, &mut total_kills)?;
             }
             _ => {}
         }
@@ -239,24 +330,12 @@ fn scan_file(filepath: &Path) -> Result<Vec<Game>, std::io::Error> {
 /// main function
 fn main() {
     let filepath = Path::new("./static/qgames.log");
-    let games = scan_file(filepath).expect("Unable to scan file");
-
-    let buildin_json = serde_json::json!({
-        "games": games.iter().map(|game| {
-            let mut players = game.players_data.values().collect::<Vec<&PlayerData>>();
-            players.sort_unstable();
-            serde_json::json!({
-                "total_kills": game.total_kills.len(),
-                "players": players.iter().map(|player| {
-                    serde_json::json!({
-                        "name": player.name,
-                        "kills": player.kills,
-                    })
-                }).collect::<Vec<serde_json::Value>>(),
-            })
-        }).collect::<Vec<serde_json::Value>>(),
-    });
-
-    println!("{}", serde_json::to_string_pretty(&buildin_json).unwrap());
-    //println!("{}", serde_json::to_string_pretty(&games).unwrap());
+    let games = match scan_file(filepath) {
+        Ok(games) => games,
+        Err(err) => {
+            eprintln!("Error parsing file {filepath:?}: {err}");
+            return;
+        }
+    };
+    println!("{games:#?}");
 }
