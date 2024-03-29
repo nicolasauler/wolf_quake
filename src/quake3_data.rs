@@ -144,15 +144,30 @@ mod tests {
     use proptest::prelude::*;
 
     prop_compose! {
-        fn arb_player_data()(name in "[a-z]*", kills in any::<i32>()) -> PlayerData {
+        fn arb_player_data_pos()(name in "[a-z]*", kills in 0..i32::MAX) -> PlayerData {
             PlayerData { name, kills }
         }
     }
 
     prop_compose! {
-        fn arb_players()
-        (player_data in arb_player_data())
+        fn arb_players_pos()
+        (player_data in arb_player_data_pos())
         (name in "[a-z]*", kills in 0..player_data.kills, player_data in Just(player_data))
+        -> (PlayerData, PlayerData) {
+            (player_data, PlayerData { name, kills })
+        }
+    }
+
+    prop_compose! {
+        fn arb_player_data_neg()(name in "[a-z]*", kills in i32::MIN..0) -> PlayerData {
+            PlayerData { name, kills }
+        }
+    }
+
+    prop_compose! {
+        fn arb_players_neg()
+        (player_data in arb_player_data_neg())
+        (name in "[a-z]*", kills in player_data.kills..0, player_data in Just(player_data))
         -> (PlayerData, PlayerData) {
             (player_data, PlayerData { name, kills })
         }
@@ -160,14 +175,28 @@ mod tests {
 
     proptest! {
         #[test]
-        fn test_player_data_ordering((a_player, other_player) in arb_players()) {
+        fn test_player_data_ordering_pos((a_player, other_player) in arb_players_pos()) {
             prop_assert!(a_player < other_player);
         }
     }
 
     proptest! {
         #[test]
-        fn test_player_data_ordering_follows_kills((a_player, other_player) in arb_players()) {
+        fn test_player_data_ordering_neg((a_player, other_player) in arb_players_neg()) {
+            prop_assert!(a_player > other_player);
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_player_data_ordering_follows_kills_pos((a_player, other_player) in arb_players_pos()) {
+            prop_assert_eq!(a_player.cmp(&other_player), other_player.kills.cmp(&a_player.kills));
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_player_data_ordering_follows_kills_neg((a_player, other_player) in arb_players_neg()) {
             prop_assert_eq!(a_player.cmp(&other_player), other_player.kills.cmp(&a_player.kills));
         }
     }
