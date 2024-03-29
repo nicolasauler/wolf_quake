@@ -2,28 +2,34 @@
 
 #![cfg_attr(coverage_nightly, feature(coverage_attribute))]
 
-/// returns two numbers
-const fn sum_two_numbers(first: i32, second: i32) -> i32 {
-    return first.saturating_add(second);
-}
+/// Module responsible for the data representation from the log
+/// like the means of death and the players data
+/// the `PlayerData` struct and the `MeanDeath` enum
+mod quake3_data;
+/// Module responsible for the parsing functionalities
+mod quake3_parser;
+
+use quake3_parser::parser::{scan_file, Game};
+use std::{fs, path::Path};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 /// main function
 fn main() {
-    let first: i32 = 5;
-    let second: i32 = 10;
-    let result = sum_two_numbers(first, second);
-    println!("The sum of {first} and {second} is {result}");
-}
+    let filepath = Path::new("./static/qgames.log");
+    let log_str = fs::read_to_string(filepath).expect("Error reading file");
 
-#[cfg(test)]
-/// the tests
-mod tests {
-    use super::*;
+    let games: Vec<Game> = match scan_file(&log_str) {
+        Ok(games) => games,
+        Err(err) => {
+            eprintln!("Error parsing file {filepath:?}: {err}");
+            return;
+        }
+    };
 
-    #[test]
-    /// tests this and that
-    fn test_sum_two_numbers() {
-        assert_eq!(sum_two_numbers(5, 10), 15);
+    for game in games {
+        let total_kills = game.total_kills;
+        println!("Total kills: {total_kills:?}");
+        let players_data = game.players_data;
+        println!("Players data: {players_data:?}");
     }
 }
