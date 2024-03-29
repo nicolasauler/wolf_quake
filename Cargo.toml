@@ -8,9 +8,11 @@ license = "MIT OR Apache-2.0"
 keywords = ["parser", "cli", "quake"]
 categories = ["command-line-utilities", "parsing"]
 edition = "2021"
-rust-version = "1.60.0"
+rust-version = "1.74.0"
 
 [dependencies]
+clap = { version = "4.5.4", features = ["derive"] }
+tabled = "0.15.0"
 
 [dev-dependencies]
 proptest = "1.4.0"
@@ -78,4 +80,5 @@ cargo = { level = "warn", priority = 0 }
 
 # allow list
 needless_return = { level = "allow", priority = 6 }
+multiple_crate_versions = { level = "allow", priority = 6 } # either clap or tabled are calling some outdated dependencies
 #question_mark_used = "allow"

@@ -5,9 +5,14 @@ use std::collections::HashMap;
 /// Represents a game with the total kills and the players data
 #[derive(Debug)]
 pub struct Game {
-    /// The total kills in the game, counts also world kills
-    /// is represented by a vector of `MeanDeath`
-    pub total_kills: Vec<MeanDeath>,
+    /// Even though this info could be derived by summing
+    /// all the kills in the `means_death` hashmap
+    /// we would have to iterate over all the keys in the hashmap
+    /// so let's also keeps this as a running total
+    pub total_kills: u32,
+    /// The total kills in the game by means of death
+    /// is represented by a hashmap with the mean of death as key and the number of kills as value
+    pub kills_by_means_death: HashMap<MeanDeath, u32>,
     /// The players data in the game
     /// is represented by a hashmap with the player id as key and the player data as value
     /// the player data contains the player name and the number of kills
@@ -20,15 +25,18 @@ pub struct Game {
 /// to start a new game
 fn finish_game_and_set_new_game(
     games: &mut Vec<Game>,
-    total_kills: &mut Vec<MeanDeath>,
+    total_kills: &mut u32,
+    kills_by_means_death: &mut HashMap<MeanDeath, u32>,
     players_data: &mut HashMap<u32, PlayerData>,
 ) {
     games.push(Game {
-        total_kills: total_kills.clone(),
+        total_kills: *total_kills,
+        kills_by_means_death: kills_by_means_death.clone(),
         players_data: players_data.clone(),
     });
+    *total_kills = 0;
+    kills_by_means_death.clear();
     players_data.clear();
-    total_kills.clear();
 }
 
 /// parses the `ClientConnect` event and initializes the `players_data`
@@ -86,8 +94,9 @@ where
 ///
 fn parse_kill<'part, I>(
     parts: &mut I,
+    total_kills: &mut u32,
+    kills_by_means_death: &mut HashMap<MeanDeath, u32>,
     players_data: &mut HashMap<u32, PlayerData>,
-    total_kills: &mut Vec<MeanDeath>,
 ) -> Result<(), ParsingError>
 where
     I: Iterator<Item = &'part str>,
@@ -109,18 +118,36 @@ where
         return Err(ParsingError::LogPartNotFound("mean_id".to_owned()));
     }
     let mean_id = mean_id_text[..mean_id_text.len().saturating_sub(1)].parse::<u32>()?;
-    total_kills.push(MeanDeath::from(mean_id));
+    let mean_death = MeanDeath::from(mean_id);
+    *total_kills = total_kills
+        .checked_add(1)
+        .ok_or_else(|| ParsingError::UnexpectedError("Total kills overflow".to_owned()))?;
+
+    match kills_by_means_death.get_mut(&mean_death) {
+        Some(count) => {
+            *count = count.checked_add(1).ok_or_else(|| {
+                ParsingError::UnexpectedError("Mean of death count overflow".to_owned())
+            })?;
+        }
+        None => {
+            kills_by_means_death.insert(mean_death, 1);
+        }
+    }
 
     if killer_id == WORLD_ID {
         let data = players_data
             .get_mut(&victim_id)
             .ok_or_else(|| ParsingError::UnexpectedError("Victim not found".to_owned()))?;
-        data.kills = data.kills.saturating_sub(1);
+        data.kills = data.kills.checked_sub(1).ok_or_else(|| {
+            ParsingError::UnexpectedError("Player score has underflowed".to_owned())
+        })?;
     } else {
         let data = players_data
             .get_mut(&killer_id)
             .ok_or_else(|| ParsingError::UnexpectedError("Killer not found".to_owned()))?;
-        data.kills = data.kills.saturating_add(1);
+        data.kills = data.kills.checked_add(1).ok_or_else(|| {
+            ParsingError::UnexpectedError("Player score has overflowed".to_owned())
+        })?;
     }
 
     Ok(())
@@ -131,14 +158,13 @@ where
 /// the `players_data` hashmap contains the player id as key and the player data as value
 pub fn scan_file(log_content: &str) -> Result<Vec<Game>, ParsingError> {
     let mut games: Vec<Game> = Vec::new();
-    let mut total_kills: Vec<MeanDeath> = Vec::new();
+    let mut total_kills: u32 = 0;
+    let mut kills_by_means_death: HashMap<MeanDeath, u32> = HashMap::new();
     let mut players_data: HashMap<u32, PlayerData> = HashMap::new();
 
     for line in log_content.lines() {
         let mut parts = line.split_whitespace();
-        let time = if let Some(timestamp) = parts.next() {
-            timestamp
-        } else {
+        let Some(time) = parts.next() else {
             // skip empty lines
             continue;
         };
@@ -152,12 +178,22 @@ pub fn scan_file(log_content: &str) -> Result<Vec<Game>, ParsingError> {
 
         match event {
             "InitGame:" => {
-                if !total_kills.is_empty() {
-                    finish_game_and_set_new_game(&mut games, &mut total_kills, &mut players_data);
+                if !kills_by_means_death.is_empty() {
+                    finish_game_and_set_new_game(
+                        &mut games,
+                        &mut total_kills,
+                        &mut kills_by_means_death,
+                        &mut players_data,
+                    );
                 }
             }
             "ShutdownGame:" => {
-                finish_game_and_set_new_game(&mut games, &mut total_kills, &mut players_data);
+                finish_game_and_set_new_game(
+                    &mut games,
+                    &mut total_kills,
+                    &mut kills_by_means_death,
+                    &mut players_data,
+                );
             }
             "ClientConnect:" => {
                 parse_client_connect(&mut parts, &mut players_data)?;
@@ -166,7 +202,12 @@ pub fn scan_file(log_content: &str) -> Result<Vec<Game>, ParsingError> {
                 parse_user_info(&mut parts, &mut players_data)?;
             }
             "Kill:" => {
-                parse_kill(&mut parts, &mut players_data, &mut total_kills)?;
+                parse_kill(
+                    &mut parts,
+                    &mut total_kills,
+                    &mut kills_by_means_death,
+                    &mut players_data,
+                )?;
             }
             _ => {}
         }
@@ -181,7 +222,7 @@ mod tests {
     use proptest::prelude::*;
 
     prop_compose! {
-        fn arb_player_data()(name in "[a-z]*", kills in any::<u32>()) -> PlayerData {
+        fn arb_player_data()(name in "[a-z]*", kills in any::<i32>()) -> PlayerData {
             PlayerData { name, kills }
         }
     }
@@ -347,8 +388,12 @@ mod tests {
             mean_id in 0..28u32,
             rest in "\\PC*",
             mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10),
-            mut total_kills in prop::collection::vec(a_random_mean_death(), 1),
+            mut kills_by_means_death in prop::collection::hash_map(a_random_mean_death(), any::<u32>(), 1),
         ) {
+            prop_assume!(killer_id != victim_id);
+
+            let initial_total_kills: Vec<u32> = kills_by_means_death.values().cloned().collect();
+            let mut total_kills: u32 = initial_total_kills[0];
             let kill_line = format!("{} {} {}: {}", killer_id, victim_id, mean_id, rest);
             players_data.insert(killer_id, PlayerData { name: "unknown".to_owned(), kills: 0 });
             players_data.insert(victim_id, PlayerData { name: "unknown".to_owned(), kills: 1 });
@@ -360,7 +405,7 @@ mod tests {
             // remove the last character (that is a colon) from the mean_text
             let mean_id = mean_text[..mean_text.len().saturating_sub(1)].parse::<u32>().unwrap();
 
-            let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
+            let result = parse_kill(&mut parts, &mut total_kills, &mut kills_by_means_death, &mut players_data);
             prop_assert!(result.is_ok());
 
             if killer_id == WORLD_ID {
@@ -370,8 +415,9 @@ mod tests {
                 prop_assert_eq!(players_data.get(&killer_id).unwrap().kills, 1);
             }
 
-            prop_assert_eq!(total_kills.len(), 2);
-            prop_assert_eq!(total_kills.last().unwrap(), &MeanDeath::from(mean_id));
+            prop_assert_eq!(total_kills, initial_total_kills[0] + 1);
+            prop_assert!(kills_by_means_death.contains_key(&MeanDeath::from(mean_id)));
+            prop_assert_eq!(total_kills, kills_by_means_death.values().sum());
         }
     }
 
@@ -383,12 +429,13 @@ mod tests {
             mean_id in "\\s*",
             rest in "\\PC*",
             mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10),
-            mut total_kills in prop::collection::vec(a_random_mean_death(), 0..10),
+            mut kills_by_means_death in prop::collection::hash_map(a_random_mean_death(), any::<u32>(), 0..10),
+            mut total_kills in any::<u32>(),
         ) {
             let kill_line = format!("{} {} {}: {}", killer_id, victim_id, mean_id, rest);
             let mut parts = kill_line.split_whitespace();
 
-            let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
+            let result = parse_kill(&mut parts, &mut total_kills, &mut kills_by_means_death, &mut players_data);
             match result {
                 Err(ParsingError::LogPartNotFound(_)) => {},
                 _ => prop_assert!(false),
@@ -404,12 +451,13 @@ mod tests {
             mean_id in 0..28u32,
             rest in "\\PC*",
             mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10),
-            mut total_kills in prop::collection::vec(a_random_mean_death(), 0..10),
+            mut kills_by_means_death in prop::collection::hash_map(a_random_mean_death(), any::<u32>(), 0..10),
+            mut total_kills in any::<u32>(),
         ) {
             let kill_line = format!("{} {} {}: {}", killer_id, victim_id, mean_id, rest);
             let mut parts = kill_line.split_whitespace();
 
-            let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
+            let result = parse_kill(&mut parts, &mut total_kills, &mut kills_by_means_death, &mut players_data);
             match result {
                 Err(ParsingError::ParseIntError(_)) => {},
                 _ => prop_assert!(false),
@@ -425,12 +473,13 @@ mod tests {
             mean_id in 0..28u32,
             rest in "\\PC*",
             mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10),
-            mut total_kills in prop::collection::vec(a_random_mean_death(), 0..10),
+            mut kills_by_means_death in prop::collection::hash_map(a_random_mean_death(), any::<u32>(), 0..10),
+            mut total_kills in any::<u32>(),
         ) {
             let kill_line = format!("{} {} {}: {}", killer_id, victim_id, mean_id, rest);
             let mut parts = kill_line.split_whitespace();
 
-            let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
+            let result = parse_kill(&mut parts, &mut total_kills, &mut kills_by_means_death, &mut players_data);
             match result {
                 Err(ParsingError::ParseIntError(_)) => {},
                 _ => prop_assert!(false),
@@ -446,12 +495,13 @@ mod tests {
             mean_id in "[^\\d\\s]+", // match everything that is not a digit or a whitespace
             rest in "\\PC*",
             mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10),
-            mut total_kills in prop::collection::vec(a_random_mean_death(), 0..10),
+            mut kills_by_means_death in prop::collection::hash_map(a_random_mean_death(), any::<u32>(), 0..10),
+            mut total_kills in any::<u32>(),
         ) {
             let kill_line = format!("{} {} {}: {}", killer_id, victim_id, mean_id, rest);
             let mut parts = kill_line.split_whitespace();
 
-            let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
+            let result = parse_kill(&mut parts, &mut total_kills, &mut kills_by_means_death, &mut players_data);
             match result {
                 Err(ParsingError::ParseIntError(_)) => {},
                 _ => prop_assert!(false),
@@ -467,12 +517,13 @@ mod tests {
             mean_id in 0..28u32,
             rest in "\\PC*",
             mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10),
-            mut total_kills in prop::collection::vec(a_random_mean_death(), 0..10),
+            mut kills_by_means_death in prop::collection::hash_map(a_random_mean_death(), any::<u32>(), 0..10),
+            mut total_kills in any::<u32>(),
         ) {
             let kill_line = format!("{} {} {}: {}", killer_id, victim_id, mean_id, rest);
             let mut parts = kill_line.split_whitespace();
 
-            let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
+            let result = parse_kill(&mut parts, &mut total_kills, &mut kills_by_means_death, &mut players_data);
             match result {
                 Err(ParsingError::ParseIntError(_)) => {},
                 _ => prop_assert!(false),
@@ -488,12 +539,13 @@ mod tests {
             mean_id in 0..28u32,
             rest in "\\PC*",
             mut players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10),
-            mut total_kills in prop::collection::vec(a_random_mean_death(), 0..10),
+            mut kills_by_means_death in prop::collection::hash_map(a_random_mean_death(), any::<u32>(), 0..10),
+            mut total_kills in any::<u32>(),
         ) {
             let kill_line = format!("{} {} {}: {}", killer_id, victim_id, mean_id, rest);
             let mut parts = kill_line.split_whitespace();
 
-            let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
+            let result = parse_kill(&mut parts, &mut total_kills, &mut kills_by_means_death, &mut players_data);
             match result {
                 Err(ParsingError::ParseIntError(_)) => {},
                 _ => prop_assert!(false),
@@ -508,7 +560,8 @@ mod tests {
             victim_id in any::<u32>(),
             mean_id in 0..28u32,
             rest in "\\PC*",
-            mut total_kills in prop::collection::vec(a_random_mean_death(), 0..10),
+            mut kills_by_means_death in prop::collection::hash_map(a_random_mean_death(), any::<u32>(), 0..10),
+            mut total_kills in any::<u32>(),
         ) {
             prop_assume!(killer_id != victim_id);
 
@@ -517,7 +570,7 @@ mod tests {
             let kill_line = format!("{} {} {}: {}", killer_id, victim_id, mean_id, rest);
             let mut parts = kill_line.split_whitespace();
 
-            let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
+            let result = parse_kill(&mut parts, &mut total_kills, &mut kills_by_means_death, &mut players_data);
             match result {
                 Err(ParsingError::UnexpectedError(_)) => {},
                 _ => prop_assert!(false),
@@ -531,7 +584,8 @@ mod tests {
             victim_id in any::<u32>(),
             mean_id in 0..28u32,
             rest in "\\PC*",
-            mut total_kills in prop::collection::vec(a_random_mean_death(), 0..10),
+            mut kills_by_means_death in prop::collection::hash_map(a_random_mean_death(), any::<u32>(), 0..10),
+            mut total_kills in any::<u32>(),
         ) {
             let killer_id = WORLD_ID;
             prop_assume!(killer_id != victim_id);
@@ -541,7 +595,7 @@ mod tests {
             let kill_line = format!("{} {} {}: {}", killer_id, victim_id, mean_id, rest);
             let mut parts = kill_line.split_whitespace();
 
-            let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
+            let result = parse_kill(&mut parts, &mut total_kills, &mut kills_by_means_death, &mut players_data);
             match result {
                 Err(ParsingError::UnexpectedError(_)) => {},
                 _ => prop_assert!(false),
@@ -576,7 +630,15 @@ mod tests {
         assert_eq!(games.len(), 2);
 
         let game0 = &games[0];
-        assert_eq!(game0.total_kills.len(), 2);
+        assert_eq!(game0.total_kills, 2);
+        assert_eq!(game0.kills_by_means_death.len(), 1);
+        assert_eq!(
+            game0
+                .kills_by_means_death
+                .get(&MeanDeath::RocketSplash)
+                .unwrap(),
+            &2
+        );
         assert_eq!(game0.players_data.len(), 2);
         assert_eq!(game0.players_data.get(&2).unwrap().name, "Isgalamido");
         assert_eq!(game0.players_data.get(&2).unwrap().kills, 1);
@@ -584,7 +646,15 @@ mod tests {
         assert_eq!(game0.players_data.get(&3).unwrap().kills, 1);
 
         let game1 = &games[1];
-        assert_eq!(game1.total_kills.len(), 2);
+        assert_eq!(game1.total_kills, 2);
+        assert_eq!(game1.kills_by_means_death.len(), 1);
+        assert_eq!(
+            game1
+                .kills_by_means_death
+                .get(&MeanDeath::TriggerHurt)
+                .unwrap(),
+            &2
+        );
         assert_eq!(game1.players_data.len(), 1);
         assert_eq!(game1.players_data.get(&2).unwrap().name, "Isgalamido");
         assert_eq!(game1.players_data.get(&2).unwrap().kills, 0);
@@ -617,7 +687,9 @@ mod tests {
             assert_eq!(games.len(), 1);
 
             let game0 = &games[0];
-            assert_eq!(game0.total_kills.len(), 2);
+            assert_eq!(game0.total_kills, 2);
+            assert_eq!(game0.kills_by_means_death.len(), 1);
+            assert_eq!(game0.kills_by_means_death.get(&MeanDeath::from(mean_id)).unwrap(), &2);
             assert_eq!(game0.players_data.len(), 2);
             assert_eq!(game0.players_data.get(&player1_id).unwrap().name, "Isgalamido");
             assert_eq!(game0.players_data.get(&player1_id).unwrap().kills, 1);
@@ -650,7 +722,15 @@ mod tests {
         assert_eq!(games.len(), 2);
 
         let game0 = &games[0];
-        assert_eq!(game0.total_kills.len(), 2);
+        assert_eq!(game0.total_kills, 2);
+        assert_eq!(game0.kills_by_means_death.len(), 1);
+        assert_eq!(
+            game0
+                .kills_by_means_death
+                .get(&MeanDeath::RocketSplash)
+                .unwrap(),
+            &2
+        );
         assert_eq!(game0.players_data.len(), 2);
         assert_eq!(game0.players_data.get(&2).unwrap().name, "Dono da bola");
         assert_eq!(game0.players_data.get(&2).unwrap().kills, 1);
@@ -658,7 +738,15 @@ mod tests {
         assert_eq!(game0.players_data.get(&3).unwrap().kills, 1);
 
         let game1 = &games[1];
-        assert_eq!(game1.total_kills.len(), 1);
+        assert_eq!(game1.total_kills, 1);
+        assert_eq!(game1.kills_by_means_death.len(), 1);
+        assert_eq!(
+            game1
+                .kills_by_means_death
+                .get(&MeanDeath::TriggerHurt)
+                .unwrap(),
+            &1
+        );
         assert_eq!(game1.players_data.len(), 1);
         assert_eq!(game1.players_data.get(&2).unwrap().name, "Isgalamido");
         assert_eq!(game1.players_data.get(&2).unwrap().kills, 1);

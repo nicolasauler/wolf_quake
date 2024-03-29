@@ -20,7 +20,7 @@
         <img src="https://codecov.io/gh/nicolasauler/wolf_quake/graph/badge.svg?token=OW4V0Q9Y2F"/>
     </a>
     <a href="https://github.com/nicolasauler/wolf_quake">
-        <img src="https://img.shields.io/badge/MSRV-1.60.0-informational" />
+        <img src="https://img.shields.io/badge/MSRV-1.74.0-informational" />
     </a>
 </div>
 
@@ -44,9 +44,9 @@ It also heavily applies clippy lints to ensure the code is idiomatic and follows
 
 Current status:
 - [x] Enviroment setup: CI, local and github
-- [-] Happy path log parsing and tests
-- [ ] CLI
-- [ ] Bug handling in original log file
+- [x] Happy path log parsing and tests
+- [x] Bug handling in original log file
+- [-] CLI
 
 For testing, Wolf Quake uses the [proptest](https://docs.rs/proptest/latest/proptest/) crate, which is kind of a more purpose-oriented fuzzy testing tool.
 

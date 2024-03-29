@@ -13,7 +13,7 @@ pub struct PlayerData {
     /// The player name
     pub name: String,
     /// The player score
-    pub kills: u32,
+    pub kills: i32,
 }
 
 impl PartialOrd for PlayerData {
@@ -23,12 +23,14 @@ impl PartialOrd for PlayerData {
 }
 
 impl Ord for PlayerData {
+    /// Sorts by the number of kills in descending order
+    /// The player with the most kills is first
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.kills.cmp(&other.kills)
+        other.kills.cmp(&self.kills)
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[allow(clippy::missing_docs_in_private_items)]
 /// The means of death enum
 /// Contains the possible means of death in Quake 3
@@ -142,7 +144,7 @@ mod tests {
     use proptest::prelude::*;
 
     prop_compose! {
-        fn arb_player_data()(name in "[a-z]*", kills in any::<u32>()) -> PlayerData {
+        fn arb_player_data()(name in "[a-z]*", kills in any::<i32>()) -> PlayerData {
             PlayerData { name, kills }
         }
     }
@@ -159,14 +161,14 @@ mod tests {
     proptest! {
         #[test]
         fn test_player_data_ordering((a_player, other_player) in arb_players()) {
-            prop_assert!(a_player > other_player);
+            prop_assert!(a_player < other_player);
         }
     }
 
     proptest! {
         #[test]
         fn test_player_data_ordering_follows_kills((a_player, other_player) in arb_players()) {
-            prop_assert_eq!(a_player.cmp(&other_player), a_player.kills.cmp(&other_player.kills));
+            prop_assert_eq!(a_player.cmp(&other_player), other_player.kills.cmp(&a_player.kills));
         }
     }
 
