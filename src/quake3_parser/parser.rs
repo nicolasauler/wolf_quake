@@ -15,6 +15,9 @@ pub struct Game {
     pub players_data: HashMap<u32, PlayerData>,
 }
 
+/// Adds game data (`total_kills` and `players_data`) to the `games` vector
+/// and clears the `total_kills` and `players_data` vectors
+/// to start a new game
 fn finish_game_and_set_new_game(
     games: &mut Vec<Game>,
     total_kills: &mut Vec<MeanDeath>,
