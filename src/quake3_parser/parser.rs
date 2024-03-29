@@ -1,11 +1,24 @@
 use super::errors::ParsingError;
 use crate::quake3_data::{MeanDeath, PlayerData, WORLD_ID};
-use std::{collections::HashMap, fs, path::Path};
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct Game {
     pub total_kills: Vec<MeanDeath>,
     pub players_data: HashMap<u32, PlayerData>,
+}
+
+fn finish_game_and_set_new_game(
+    games: &mut Vec<Game>,
+    total_kills: &mut Vec<MeanDeath>,
+    players_data: &mut HashMap<u32, PlayerData>,
+) {
+    games.push(Game {
+        total_kills: total_kills.clone(),
+        players_data: players_data.clone(),
+    });
+    players_data.clear();
+    total_kills.clear();
 }
 
 /// parses the `ClientConnect` event and initializes the `players_data`
@@ -106,32 +119,35 @@ where
 /// scans the file and returns a vector of games
 /// each game contains a vector of `total_kills` and a hashmap of `players_data`
 /// the `players_data` hashmap contains the player id as key and the player data as value
-pub fn scan_file(filepath: &Path) -> Result<Vec<Game>, ParsingError> {
-    let log_str = fs::read_to_string(filepath)?;
-
+pub fn scan_file(log_content: &str) -> Result<Vec<Game>, ParsingError> {
     let mut games: Vec<Game> = Vec::new();
     let mut total_kills: Vec<MeanDeath> = Vec::new();
     let mut players_data: HashMap<u32, PlayerData> = HashMap::new();
 
-    for line in log_str.lines() {
+    for line in log_content.lines() {
         let mut parts = line.split_whitespace();
-        let (_time, event) = (
-            parts
-                .next()
-                .ok_or_else(|| ParsingError::LogPartNotFound("timestamp".to_owned()))?,
-            parts
-                .next()
-                .ok_or_else(|| ParsingError::LogPartNotFound("event".to_owned()))?,
-        );
+        let time = if let Some(timestamp) = parts.next() {
+            timestamp
+        } else {
+            // skip empty lines
+            continue;
+        };
+        if time.len() < 4 || !(time.chars().all(|c| c.is_numeric() || c == ':')) {
+            // skip lines that don't start with a timestamp
+            continue;
+        }
+        let event = parts
+            .next()
+            .ok_or_else(|| ParsingError::LogPartNotFound("event".to_owned()))?;
 
         match event {
+            "InitGame:" => {
+                if !total_kills.is_empty() {
+                    finish_game_and_set_new_game(&mut games, &mut total_kills, &mut players_data);
+                }
+            }
             "ShutdownGame:" => {
-                games.push(Game {
-                    total_kills: total_kills.clone(),
-                    players_data: players_data.clone(),
-                });
-                players_data.clear();
-                total_kills.clear();
+                finish_game_and_set_new_game(&mut games, &mut total_kills, &mut players_data);
             }
             "ClientConnect:" => {
                 parse_client_connect(&mut parts, &mut players_data)?;
@@ -518,6 +534,145 @@ mod tests {
             let result = parse_kill(&mut parts, &mut players_data, &mut total_kills);
             match result {
                 Err(ParsingError::UnexpectedError(_)) => {},
+                _ => prop_assert!(false),
+            }
+        }
+    }
+
+    #[test]
+    fn test_scan_file() {
+        let log_content = r#"
+        0:00 ------------------------------------------------------------
+        0:00 InitGame: \sv_floodProtect\1\sv_maxPing\0\sv_minPing\0\sv_maxRate\10000\sv_minRate\0\sv_hostname\Code Miner Server\g_gametype\0\sv_privateClients\2\sv_maxclients\16\sv_allowDownload\0\bot_minplayers\0\dmflags\0\fraglimit\20\timelimit\15\g_maxGameClients\0\capturelimit\8\version\ioq3 1.36 linux-x86_64 Apr 12 2009\protocol\68\mapname\q3dm17\gamename\baseq3\g_needpass\0
+        0:01 ClientConnect: 2
+        0:02 ClientUserinfoChanged: 2 n\Isgalamido\t\0\model\uriel/zael\hmodel\uriel/zael\g_redteam\\g_blueteam\\c1\5\c2\5\hc\100\w\0\l\0\tt\0\tl\0
+        0:03 ClientConnect: 3
+        0:04 ClientUserinfoChanged: 3 n\Mocinha\t\0\model\sarge\hmodel\sarge\g_redteam\\g_blueteam\\c1\4\c2\5\hc\95\w\0\l\0\tt\0\tl\0
+        0:05 Kill: 2 3 7: Isgalamido killed Mocinha by MOD_ROCKET_SPLASH
+        0:06 Kill: 3 2 7: Mocinha killed Isgalamido by MOD_ROCKET_SPLASH
+        0:07 ShutdownGame:
+        0:07 ------------------------------------------------------------
+        0:08 ------------------------------------------------------------
+        0:08 InitGame: \sv_floodProtect\1\sv_maxPing\0\sv_minPing\0\sv_maxRate\10000\sv_minRate\0\sv_hostname\Code Miner Server\g_gametype\0\sv_privateClients\2\sv_maxclients\16\sv_allowDownload\0\bot_minplayers\0\dmflags\0\fraglimit\20\timelimit\15\g_maxGameClients\0\capturelimit\8\version\ioq3 1.36 linux-x86_64 Apr 12 2009\protocol\68\mapname\q3dm17\gamename\baseq3\g_needpass\0
+        0:09 ClientConnect: 2
+        0:10 ClientUserinfoChanged: 2 n\Isgalamido\t\0\model\uriel/zael\hmodel\uriel/zael\g_redteam\\g_blueteam\\c1\5\c2\5\hc\100\w\0\l\0\tt\0\tl\0
+        0:11 Kill: 2 2 22: Isgalamido killed Isgalamido by MOD_TRIGGER_HURT
+        0:12 Kill: 1022 2 22: <world> killed Isgalamido by MOD_TRIGGER_HURT
+        0:13 ShutdownGame:
+        0:14 ------------------------------------------------------------
+        "#;
+
+        let games = scan_file(log_content).unwrap();
+        assert_eq!(games.len(), 2);
+
+        let game0 = &games[0];
+        assert_eq!(game0.total_kills.len(), 2);
+        assert_eq!(game0.players_data.len(), 2);
+        assert_eq!(game0.players_data.get(&2).unwrap().name, "Isgalamido");
+        assert_eq!(game0.players_data.get(&2).unwrap().kills, 1);
+        assert_eq!(game0.players_data.get(&3).unwrap().name, "Mocinha");
+        assert_eq!(game0.players_data.get(&3).unwrap().kills, 1);
+
+        let game1 = &games[1];
+        assert_eq!(game1.total_kills.len(), 2);
+        assert_eq!(game1.players_data.len(), 1);
+        assert_eq!(game1.players_data.get(&2).unwrap().name, "Isgalamido");
+        assert_eq!(game1.players_data.get(&2).unwrap().kills, 0);
+    }
+
+    proptest! {
+        #[test]
+        fn test_scan_file_prop(
+            whatever in "\\PC*",
+            player1_id in any::<u32>(),
+            player2_id in any::<u32>(),
+            mean_id in 0..28u32,
+        ) {
+            let log_content = format!(
+                r#"
+                0:00 ------------------------------------------------------------
+                0:00 InitGame: {whatever}
+                0:01 ClientConnect: {player1_id}
+                0:02 ClientUserinfoChanged: {player1_id} n\Isgalamido\{whatever}
+                0:03 ClientConnect: {player2_id}
+                0:04 ClientUserinfoChanged: {player2_id} n\Mocinha\{whatever}
+                0:05 Kill: {player1_id} {player2_id} {mean_id}: {whatever}
+                0:06 Kill: {player2_id} {player1_id} {mean_id}: {whatever}
+                0:07 ShutdownGame:
+                0:07 ------------------------------------------------------------
+                "#,
+            );
+
+            let games = scan_file(&log_content).unwrap();
+            assert_eq!(games.len(), 1);
+
+            let game0 = &games[0];
+            assert_eq!(game0.total_kills.len(), 2);
+            assert_eq!(game0.players_data.len(), 2);
+            assert_eq!(game0.players_data.get(&player1_id).unwrap().name, "Isgalamido");
+            assert_eq!(game0.players_data.get(&player1_id).unwrap().kills, 1);
+            assert_eq!(game0.players_data.get(&player2_id).unwrap().name, "Mocinha");
+            assert_eq!(game0.players_data.get(&player2_id).unwrap().kills, 1);
+        }
+    }
+
+    #[test]
+    fn test_buggy_scan_file() {
+        let log_content = r#"
+        0:00 ------------------------------------------------------------
+        0:00 InitGame: \sv_floodProtect\1\sv_maxPing\0\sv_minPing\0\sv_maxRate\10000\sv_minRate\0\sv_hostname\Code Miner Server\g_gametype\0\sv_privateClients\2\sv_maxclients\16\sv_allowDownload\0\bot_minplayers\0\dmflags\0\fraglimit\20\timelimit\15\g_maxGameClients\0\capturelimit\8\version\ioq3 1.36 linux-x86_64 Apr 12 2009\protocol\68\mapname\q3dm17\gamename\baseq3\g_needpass\0
+        0:01 ClientConnect: 2
+        0:02 ClientUserinfoChanged: 2 n\Dono da bola\t\0\model\uriel/zael\hmodel\uriel/zael\g_redteam\\g_blueteam\\c1\5\c2\5\hc\100\w\0\l\0\tt\0\tl\0
+        0:03 ClientConnect: 3
+        0:04 ClientUserinfoChanged: 3 n\Mocinha\t\0\model\sarge\hmodel\sarge\g_redteam\\g_blueteam\\c1\4\c2\5\hc\95\w\0\l\0\tt\0\tl\0
+        0:05 Kill: 2 3 7: Dono da bola killed Mocinha by MOD_ROCKET_SPLASH
+        0:06 Kill: 3 2 7: Mocinha killed Dono da bola by MOD_ROCKET_SPLASH
+        0:07 ShutdownGame:
+        26 0:07 ------------------------------------------------------------
+        0:08 InitGame: \sv_floodProtect\1\sv_maxPing\0\sv_minPing\0\sv_maxRate\10000\sv_minRate\0\sv_hostname\Code Miner Server\g_gametype\0\sv_privateClients\2\sv_maxclients\16\sv_allowDownload\0\bot_minplayers\0\dmflags\0\fraglimit\20\timelimit\15\g_maxGameClients\0\capturelimit\8\version\ioq3 1.36 linux-x86_64 Apr 12 2009\protocol\68\mapname\q3dm17\gamename\baseq3\g_needpass\0
+        0:09 ClientConnect: 2
+        0:10 ClientUserinfoChanged: 2 n\Isgalamido\t\0\model\uriel/zael\hmodel\uriel/zael\g_redteam\\g_blueteam\\c1\5\c2\5\hc\100\w\0\l\0\tt\0\tl\0
+        0:11 Kill: 2 2 22: Isgalamido killed Isgalamido by MOD_TRIGGER_HURT
+        0:12 ShutdownGame:
+        0:13 ------------------------------------------------------------
+        "#;
+
+        let games = scan_file(log_content).unwrap();
+        assert_eq!(games.len(), 2);
+
+        let game0 = &games[0];
+        assert_eq!(game0.total_kills.len(), 2);
+        assert_eq!(game0.players_data.len(), 2);
+        assert_eq!(game0.players_data.get(&2).unwrap().name, "Dono da bola");
+        assert_eq!(game0.players_data.get(&2).unwrap().kills, 1);
+        assert_eq!(game0.players_data.get(&3).unwrap().name, "Mocinha");
+        assert_eq!(game0.players_data.get(&3).unwrap().kills, 1);
+
+        let game1 = &games[1];
+        assert_eq!(game1.total_kills.len(), 1);
+        assert_eq!(game1.players_data.len(), 1);
+        assert_eq!(game1.players_data.get(&2).unwrap().name, "Isgalamido");
+        assert_eq!(game1.players_data.get(&2).unwrap().kills, 1);
+    }
+
+    proptest! {
+        #[test]
+        fn test_scan_file_event_not_found(
+            event in "\\s*",
+            whatever in "\\PC*",
+        ) {
+            let log_content = format!(
+                r#"
+                0:00 ------------------------------------------------------------
+                0:00 InitGame: {whatever}
+                0:01 ClientConnect: 2
+                0:02 {event}
+                "#,
+            );
+
+            let result = scan_file(&log_content);
+            match result {
+                Err(ParsingError::LogPartNotFound(_)) => {},
                 _ => prop_assert!(false),
             }
         }

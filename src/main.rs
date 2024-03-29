@@ -6,13 +6,15 @@ mod quake3_data;
 mod quake3_parser;
 
 use quake3_parser::parser::{scan_file, Game};
-use std::path::Path;
+use std::{fs, path::Path};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 /// main function
 fn main() {
     let filepath = Path::new("./static/qgames.log");
-    let games: Vec<Game> = match scan_file(filepath) {
+    let log_str = fs::read_to_string(filepath).expect("Error reading file");
+
+    let games: Vec<Game> = match scan_file(&log_str) {
         Ok(games) => games,
         Err(err) => {
             eprintln!("Error parsing file {filepath:?}: {err}");
