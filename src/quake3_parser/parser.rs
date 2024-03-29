@@ -2,9 +2,16 @@ use super::errors::ParsingError;
 use crate::quake3_data::{MeanDeath, PlayerData, WORLD_ID};
 use std::collections::HashMap;
 
+/// Represents a game with the total kills and the players data
 #[derive(Debug)]
 pub struct Game {
+    /// The total kills in the game, counts also world kills
+    /// is represented by a vector of `MeanDeath`
     pub total_kills: Vec<MeanDeath>,
+    /// The players data in the game
+    /// is represented by a hashmap with the player id as key and the player data as value
+    /// the player data contains the player name and the number of kills
+    /// the number of kills is decremented when the player is killed by the world
     pub players_data: HashMap<u32, PlayerData>,
 }
 

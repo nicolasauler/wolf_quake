@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// The errors that can occur while parsing the logs
 pub enum ParsingError {
     /// When an unexpected error occurs
     /// (e.g. when a player that hasn't connected performs an action

@@ -2,7 +2,11 @@
 
 #![cfg_attr(coverage_nightly, feature(coverage_attribute))]
 
+/// Module responsible for the data representation from the log
+/// like the means of death and the players data
+/// the `PlayerData` struct and the `MeanDeath` enum
 mod quake3_data;
+/// Module responsible for the parsing functionalities
 mod quake3_parser;
 
 use quake3_parser::parser::{scan_file, Game};

@@ -48,8 +48,7 @@ integer_division = { level = "warn", priority = 3 }
 let_underscore_untyped = { level = "warn", priority = 3 }
 missing_assert_message = { level = "warn", priority = 3 }
 missing_asserts_for_indexing = { level = "warn", priority = 3 }
-#### DEV BRANCH ONLY
-# missing_docs_in_private_items = { level = "warn", priority = 3 }
+missing_docs_in_private_items = { level = "warn", priority = 3 }
 missing_inline_in_public_items = { level = "warn", priority = 3 }
 multiple_inherent_impl = { level = "warn", priority = 3 }
 needless_raw_strings = { level = "warn", priority = 3 }

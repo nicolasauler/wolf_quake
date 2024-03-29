@@ -1,10 +1,18 @@
 use std::fmt::Display;
 
+/// The world id is hardcoded as 1022
 pub const WORLD_ID: u32 = 1022;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// The player data struct
+/// Contains the player name and the number of kills
+/// The number of kills is decremented when the world kills a player
+///
+/// Implements custom `PartialOrd` and `Ord` to allow sorting by the number of kills
 pub struct PlayerData {
+    /// The player name
     pub name: String,
+    /// The player score
     pub kills: u32,
 }
 
@@ -21,6 +29,9 @@ impl Ord for PlayerData {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(clippy::missing_docs_in_private_items)]
+/// The means of death enum
+/// Contains the possible means of death in Quake 3
 pub enum MeanDeath {
     Unknown,
     Shotgun,
