@@ -398,6 +398,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "table_to_html"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0df745cc3774c5ff6c21a215fb6b7446a138b85ad0e75bc8000c2a36813061a9"
+dependencies = [
+ "tabled",
+]
+
+[[package]]
 name = "tabled"
 version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -550,5 +559,6 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "proptest",
+ "table_to_html",
  "tabled",
 ]
