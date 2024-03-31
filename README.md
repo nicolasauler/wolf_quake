@@ -27,9 +27,15 @@
 ## 🏞️ Overview
 
 Wolf Quake is a parser for Quake 3 Arena log files.
+
 You can find a log file: [file](https://gist.github.com/cloudwalk-tests/be1b636e58abff14088c8b5309f575d8)
 
-### Usage
+## :scroll: Documentation
+
+Documentation can be found in:
+[DOCUMENTATION](https://nicolasauler.github.io/wolf_quake)
+
+## :computer_mouse: Usage
 ```shell
 Quake 3 log parser
 
@@ -46,10 +52,203 @@ Options:
   -V, --version                        Print version
 ```
 
-## :scroll: Documentation
+### Examples
+#### Txt report
 
-Documentation can be found in:
-[DOCUMENTATION](https://nicolasauler.github.io/wolf_quake)
+```console
+foo@bar:~$ wolf_quake -f text -o report.txt games.log
+```
+
+```shell
+╭────────┬──────────────────┬─────────────────┬──────────────────╮
+│        │                  │                 │                  │
+│        │ Total game kills │ Kill Rank       │  Death Causes    │
+│        │                  │ (Player: Score) │  (Cause: Count)  │
+│        │                  │                 │                  │
+├────────┼──────────────────┼─────────────────┼──────────────────┤
+│        │                  │                 │                  │
+│ Game 1 │        1         │   Player1: -1   │  TriggerHurt: 1  │
+│        │                  │                 │                  │
+├────────┼──────────────────┼─────────────────┼──────────────────┤
+│        │                  │                 │                  │
+│        │                  │   Player2: 1    │ Rocket Splash: 1 │
+│ Game 2 │        2         │                 │                  │
+│        │                  │   Player1: -1   │ TriggerHurt: 1   │
+│        │                  │                 │                  │
+╰────────┴──────────────────┴─────────────────┴──────────────────╯
+```
+
+#### Html report
+
+```console
+foo@bar:~$ wolf_quake -f html -o report.html games.log
+```
+
+Not really formatted how it should be due to rendering in markdown, but you can open
+[report.html](./examples/qgames_report.html) to see the actual result in your browser.
+
+<table>
+<thead>
+<tr>
+<th>
+<div>
+<p>
+
+</p>
+<p>
+
+</p>
+<p>
+
+</p>
+</div>
+</th>
+<th>
+<div>
+<p>
+
+</p>
+<p>
+Total game kills
+</p>
+<p>
+
+</p>
+</div>
+</th>
+<th>
+<div>
+<p>
+
+</p>
+<p>
+Kill Rank
+</p>
+<p>
+(Player: Score)
+</p>
+<p>
+
+</p>
+</div>
+</th>
+<th>
+<div>
+<p>
+
+</p>
+<p>
+Death Causes
+</p>
+<p>
+(Cause: Count)
+</p>
+<p>
+
+</p>
+</div>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<div>
+<p>
+Game 1
+</p>
+</div>
+</td>
+<td>
+<div>
+<p>
+1
+</p>
+</div>
+</td>
+<td>
+<div>
+<p>
+
+</p>
+<p>
+Player1: -1
+</p>
+<p>
+
+</p>
+</div>
+</td>
+<td>
+<div>
+<p>
+
+</p>
+<p>
+TriggerHurt: 1
+</p>
+<p>
+
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td>
+<div>
+<p>
+Game 2
+</p>
+</div>
+</td>
+<td>
+<div>
+<p>
+2
+</p>
+</div>
+</td>
+<td>
+<div>
+<p>
+
+</p>
+<p>
+Player2: 1
+</p>
+<p>
+
+</p>
+<p>
+Player1: -1
+</p>
+<p>
+
+</p>
+</div>
+</td>
+<td>
+<div>
+<p>
+
+</p>
+<p>
+Rocket Splash: 1
+</p>
+<p>
+
+</p>
+<p>
+TriggerHurt: 1
+</p>
+<p>
+
+</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
 
 ## 🦺 Security and 💻 Software
 
@@ -60,9 +259,9 @@ Current status:
 - [x] Enviroment setup: CI, local and github
 - [x] Happy path log parsing and tests
 - [x] Bug handling in original log file
-- [x] CLI
-- [ ] Integration tests
-- [ ] Documentation
+- [x] CLI and tests
+- [x] Documentation
+- [ ] Better docs.rs reference documentation
 
 For testing, Wolf Quake uses the [proptest](https://docs.rs/proptest/latest/proptest/) crate, which is kind of a more purpose-oriented fuzzy testing tool.
 
