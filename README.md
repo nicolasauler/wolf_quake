@@ -35,7 +35,7 @@ You can find a log file: [file](https://gist.github.com/cloudwalk-tests/be1b636e
 Documentation can be found in:
 [DOCUMENTATION](https://nicolasauler.github.io/wolf_quake)
 
-### Usage
+## :computer_mouse: Usage
 ```shell
 Quake 3 log parser
 
