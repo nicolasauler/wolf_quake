@@ -17,7 +17,7 @@ use std::fmt::Display;
 // even though Table seem to be bigger
 // and Boxing Table seems excessive
 // let's keep it for now
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 /// The report type
 /// Can be a text table or an html table
 pub enum Report {
@@ -148,5 +148,186 @@ pub fn get_report(
             html_table.set_border(1);
             Ok(Report::Html(html_table))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    //use proptest::prelude::*;
+
+    #[test]
+    fn test_display_empty_text_report() {
+        let report = Report::Text(Table::default());
+        let report_str = report.to_string();
+        assert!(report_str.is_empty());
+    }
+
+    #[test]
+    fn test_display_empty_html_report() {
+        let report = Report::Html(HtmlTable::new(vec![vec![""]]));
+        let report_str = report.to_string();
+        let expected = r#"<table>
+    <tbody>
+        <tr>
+            <td>
+                <div>
+                    <p>
+                        
+                    </p>
+                </div>
+            </td>
+        </tr>
+    </tbody>
+</table>"#;
+        assert_eq!(report_str, expected);
+    }
+
+    /// Since the display of Report only passed to the formatter of each variant
+    /// let's test the `tabled` directly with: https://github.com/zhiburt/tabled/tree/master?tab=readme-ov-file#usage
+    #[test]
+    fn test_display_report_text_table() {
+        struct Language {
+            name: &'static str,
+            designed_by: &'static str,
+            invented_year: usize,
+        }
+
+        let languages = vec![
+            Language {
+                name: "C",
+                designed_by: "Dennis Ritchie",
+                invented_year: 1972,
+            },
+            Language {
+                name: "Go",
+                designed_by: "Rob Pike",
+                invented_year: 2009,
+            },
+            Language {
+                name: "Rust",
+                designed_by: "Graydon Hoare",
+                invented_year: 2010,
+            },
+        ];
+
+        let mut builder = Builder::new();
+        for language in languages.iter().rev() {
+            let record = vec![
+                language.name.to_string(),
+                language.designed_by.to_string(),
+                language.invented_year.to_string(),
+            ];
+            builder.insert_record(0, record);
+        }
+        let columns = vec!["name", "designed_by", "invented_year"];
+        builder.insert_record(0, columns);
+        let table = builder.build();
+        let report = Report::Text(table);
+
+        let expected = "+------+----------------+---------------+\n\
+                | name | designed_by    | invented_year |\n\
+                +------+----------------+---------------+\n\
+                | C    | Dennis Ritchie | 1972          |\n\
+                +------+----------------+---------------+\n\
+                | Go   | Rob Pike       | 2009          |\n\
+                +------+----------------+---------------+\n\
+                | Rust | Graydon Hoare  | 2010          |\n\
+                +------+----------------+---------------+";
+
+        assert_eq!(report.to_string(), expected);
+    }
+
+    /// Since the display of Report only passed to the formatter of each variant
+    /// let's test the `table_to_html` directly with: https://docs.rs/table_to_html/latest/table_to_html/#example-building-a-table-from-iterator
+    #[test]
+    fn test_display_report_html_table() {
+        let data = vec![
+            vec!["Debian", "", "0"],
+            vec!["Arch", "", "0"],
+            vec!["Manjaro", "Arch", "0"],
+        ];
+
+        let html_table = HtmlTable::new(data);
+        let report = Report::Html(html_table);
+
+        assert_eq!(
+            report.to_string(),
+            concat!(
+                "<table>\n",
+                "    <tbody>\n",
+                "        <tr>\n",
+                "            <td>\n",
+                "                <div>\n",
+                "                    <p>\n",
+                "                        Debian\n",
+                "                    </p>\n",
+                "                </div>\n",
+                "            </td>\n",
+                "            <td>\n",
+                "                <div>\n",
+                "                    <p>\n",
+                "                        \n",
+                "                    </p>\n",
+                "                </div>\n",
+                "            </td>\n",
+                "            <td>\n",
+                "                <div>\n",
+                "                    <p>\n",
+                "                        0\n",
+                "                    </p>\n",
+                "                </div>\n",
+                "            </td>\n",
+                "        </tr>\n",
+                "        <tr>\n",
+                "            <td>\n",
+                "                <div>\n",
+                "                    <p>\n",
+                "                        Arch\n",
+                "                    </p>\n",
+                "                </div>\n",
+                "            </td>\n",
+                "            <td>\n",
+                "                <div>\n",
+                "                    <p>\n",
+                "                        \n",
+                "                    </p>\n",
+                "                </div>\n",
+                "            </td>\n",
+                "            <td>\n",
+                "                <div>\n",
+                "                    <p>\n",
+                "                        0\n",
+                "                    </p>\n",
+                "                </div>\n",
+                "            </td>\n",
+                "        </tr>\n",
+                "        <tr>\n",
+                "            <td>\n",
+                "                <div>\n",
+                "                    <p>\n",
+                "                        Manjaro\n",
+                "                    </p>\n",
+                "                </div>\n",
+                "            </td>\n",
+                "            <td>\n",
+                "                <div>\n",
+                "                    <p>\n",
+                "                        Arch\n",
+                "                    </p>\n",
+                "                </div>\n",
+                "            </td>\n",
+                "            <td>\n",
+                "                <div>\n",
+                "                    <p>\n",
+                "                        0\n",
+                "                    </p>\n",
+                "                </div>\n",
+                "            </td>\n",
+                "        </tr>\n",
+                "    </tbody>\n",
+                "</table>"
+            ),
+        )
     }
 }
