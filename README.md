@@ -46,6 +46,209 @@ Options:
   -V, --version                        Print version
 ```
 
+### Example
+1. Txt report in console
+
+```shell
+wolf_quake -f text -o report.txt games.log
+```
+
+```shell
+╭────────┬──────────────────┬─────────────────┬──────────────────╮
+│        │                  │                 │                  │
+│        │ Total game kills │ Kill Rank       │  Death Causes    │
+│        │                  │ (Player: Score) │  (Cause: Count)  │
+│        │                  │                 │                  │
+├────────┼──────────────────┼─────────────────┼──────────────────┤
+│        │                  │                 │                  │
+│ Game 1 │        1         │   Player1: -1   │  TriggerHurt: 1  │
+│        │                  │                 │                  │
+├────────┼──────────────────┼─────────────────┼──────────────────┤
+│        │                  │                 │                  │
+│        │                  │   Player2: 1    │ Rocket Splash: 1 │
+│ Game 2 │        2         │                 │                  │
+│        │                  │   Player1: -1   │ TriggerHurt: 1   │
+│        │                  │                 │                  │
+╰────────┴──────────────────┴─────────────────┴──────────────────╯
+```
+
+2. Html report in console
+
+```shell
+wolf_quake -f html -o report.html games.log
+```
+
+<style>
+    table, th, td {
+      border: 1px solid;
+    }
+    tbody > tr > td, thead > tr > th {
+      text-align: center;
+    }
+</style>
+<table>
+    <thead>
+        <tr>
+            <th>
+                <div>
+                    <p>
+                        
+                    </p>
+                    <p>
+                        
+                    </p>
+                    <p>
+                        
+                    </p>
+                </div>
+            </th>
+            <th>
+                <div>
+                    <p>
+                        
+                    </p>
+                    <p>
+                        Total game kills
+                    </p>
+                    <p>
+                        
+                    </p>
+                </div>
+            </th>
+            <th>
+                <div>
+                    <p>
+                        
+                    </p>
+                    <p>
+                        Kill Rank
+                    </p>
+                    <p>
+                        (Player: Score)
+                    </p>
+                    <p>
+                        
+                    </p>
+                </div>
+            </th>
+            <th>
+                <div>
+                    <p>
+                        
+                    </p>
+                    <p>
+                        Death Causes
+                    </p>
+                    <p>
+                        (Cause: Count)
+                    </p>
+                    <p>
+                        
+                    </p>
+                </div>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                <div>
+                    <p>
+                        Game 1
+                    </p>
+                </div>
+            </td>
+            <td>
+                <div>
+                    <p>
+                        1
+                    </p>
+                </div>
+            </td>
+            <td>
+                <div>
+                    <p>
+                        
+                    </p>
+                    <p>
+                        Player1: -1
+                    </p>
+                    <p>
+                        
+                    </p>
+                </div>
+            </td>
+            <td>
+                <div>
+                    <p>
+                        
+                    </p>
+                    <p>
+                        TriggerHurt: 1
+                    </p>
+                    <p>
+                        
+                    </p>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div>
+                    <p>
+                        Game 2
+                    </p>
+                </div>
+            </td>
+            <td>
+                <div>
+                    <p>
+                        2
+                    </p>
+                </div>
+            </td>
+            <td>
+                <div>
+                    <p>
+                        
+                    </p>
+                    <p>
+                        Player2: 1
+                    </p>
+                    <p>
+                        
+                    </p>
+                    <p>
+                        Player1: -1
+                    </p>
+                    <p>
+                        
+                    </p>
+                </div>
+            </td>
+            <td>
+                <div>
+                    <p>
+                        
+                    </p>
+                    <p>
+                        Rocket Splash: 1
+                    </p>
+                    <p>
+                        
+                    </p>
+                    <p>
+                        TriggerHurt: 1
+                    </p>
+                    <p>
+                        
+                    </p>
+                </div>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
 ## :scroll: Documentation
 
 Documentation can be found in:
@@ -60,8 +263,7 @@ Current status:
 - [x] Enviroment setup: CI, local and github
 - [x] Happy path log parsing and tests
 - [x] Bug handling in original log file
-- [x] CLI
-- [ ] Integration tests
+- [x] CLI and tests
 - [ ] Documentation
 
 For testing, Wolf Quake uses the [proptest](https://docs.rs/proptest/latest/proptest/) crate, which is kind of a more purpose-oriented fuzzy testing tool.
