@@ -27,7 +27,13 @@
 ## 🏞️ Overview
 
 Wolf Quake is a parser for Quake 3 Arena log files.
+
 You can find a log file: [file](https://gist.github.com/cloudwalk-tests/be1b636e58abff14088c8b5309f575d8)
+
+## :scroll: Documentation
+
+Documentation can be found in:
+[DOCUMENTATION](https://nicolasauler.github.io/wolf_quake)
 
 ### Usage
 ```shell
@@ -46,8 +52,8 @@ Options:
   -V, --version                        Print version
 ```
 
-### Example
-1. Txt report in console
+### Examples
+#### Txt report
 
 ```console
 foo@bar:~$ wolf_quake -f text -o report.txt games.log
@@ -72,7 +78,7 @@ foo@bar:~$ wolf_quake -f text -o report.txt games.log
 ╰────────┴──────────────────┴─────────────────┴──────────────────╯
 ```
 
-2. Html report in console
+#### Html report
 
 ```console
 foo@bar:~$ wolf_quake -f html -o report.html games.log
@@ -244,11 +250,6 @@ TriggerHurt: 1
 </tbody>
 </table>
 
-## :scroll: Documentation
-
-Documentation can be found in:
-[DOCUMENTATION](https://nicolasauler.github.io/wolf_quake)
-
 ## 🦺 Security and 💻 Software
 
 Wolf Quake is written in Rust :crab: and uses `#![forbid(unsafe_code)]` to ensure everything is implemented in 100% safe Rust.
@@ -259,7 +260,8 @@ Current status:
 - [x] Happy path log parsing and tests
 - [x] Bug handling in original log file
 - [x] CLI and tests
-- [ ] Documentation
+- [x] Documentation
+- [ ] Better docs.rs reference documentation
 
 For testing, Wolf Quake uses the [proptest](https://docs.rs/proptest/latest/proptest/) crate, which is kind of a more purpose-oriented fuzzy testing tool.
 
