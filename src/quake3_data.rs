@@ -13,7 +13,7 @@ pub struct PlayerData {
     /// The player name
     pub name: String,
     /// The player score
-    pub kills: u32,
+    pub kills: i32,
 }
 
 impl PartialOrd for PlayerData {
@@ -23,12 +23,14 @@ impl PartialOrd for PlayerData {
 }
 
 impl Ord for PlayerData {
+    /// Sorts by the number of kills in descending order
+    /// The player with the most kills is first
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.kills.cmp(&other.kills)
+        other.kills.cmp(&self.kills)
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[allow(clippy::missing_docs_in_private_items)]
 /// The means of death enum
 /// Contains the possible means of death in Quake 3
@@ -142,15 +144,30 @@ mod tests {
     use proptest::prelude::*;
 
     prop_compose! {
-        fn arb_player_data()(name in "[a-z]*", kills in any::<u32>()) -> PlayerData {
+        fn arb_player_data_pos()(name in "[a-z]*", kills in 0..i32::MAX) -> PlayerData {
             PlayerData { name, kills }
         }
     }
 
     prop_compose! {
-        fn arb_players()
-        (player_data in arb_player_data())
+        fn arb_players_pos()
+        (player_data in arb_player_data_pos())
         (name in "[a-z]*", kills in 0..player_data.kills, player_data in Just(player_data))
+        -> (PlayerData, PlayerData) {
+            (player_data, PlayerData { name, kills })
+        }
+    }
+
+    prop_compose! {
+        fn arb_player_data_neg()(name in "[a-z]*", kills in i32::MIN..0) -> PlayerData {
+            PlayerData { name, kills }
+        }
+    }
+
+    prop_compose! {
+        fn arb_players_neg()
+        (player_data in arb_player_data_neg())
+        (name in "[a-z]*", kills in player_data.kills..0, player_data in Just(player_data))
         -> (PlayerData, PlayerData) {
             (player_data, PlayerData { name, kills })
         }
@@ -158,15 +175,29 @@ mod tests {
 
     proptest! {
         #[test]
-        fn test_player_data_ordering((a_player, other_player) in arb_players()) {
+        fn test_player_data_ordering_pos((a_player, other_player) in arb_players_pos()) {
+            prop_assert!(a_player < other_player);
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_player_data_ordering_neg((a_player, other_player) in arb_players_neg()) {
             prop_assert!(a_player > other_player);
         }
     }
 
     proptest! {
         #[test]
-        fn test_player_data_ordering_follows_kills((a_player, other_player) in arb_players()) {
-            prop_assert_eq!(a_player.cmp(&other_player), a_player.kills.cmp(&other_player.kills));
+        fn test_player_data_ordering_follows_kills_pos((a_player, other_player) in arb_players_pos()) {
+            prop_assert_eq!(a_player.cmp(&other_player), other_player.kills.cmp(&a_player.kills));
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn test_player_data_ordering_follows_kills_neg((a_player, other_player) in arb_players_neg()) {
+            prop_assert_eq!(a_player.cmp(&other_player), other_player.kills.cmp(&a_player.kills));
         }
     }
 
