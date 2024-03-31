@@ -49,8 +49,8 @@ Options:
 ### Example
 1. Txt report in console
 
-```shell
-wolf_quake -f text -o report.txt games.log
+```console
+foo@bar:~$ wolf_quake -f text -o report.txt games.log
 ```
 
 ```shell
@@ -74,179 +74,174 @@ wolf_quake -f text -o report.txt games.log
 
 2. Html report in console
 
-```shell
-wolf_quake -f html -o report.html games.log
+```console
+foo@bar:~$ wolf_quake -f html -o report.html games.log
 ```
 
-<style>
-    table, th, td {
-      border: 1px solid;
-    }
-    tbody > tr > td, thead > tr > th {
-      text-align: center;
-    }
-</style>
+Not really formatted how it should be due to rendering in markdown, but you can open
+[report.html](./examples/qgames_report.html) to see the actual result in your browser.
+
 <table>
-    <thead>
-        <tr>
-            <th>
-                <div>
-                    <p>
-                        
-                    </p>
-                    <p>
-                        
-                    </p>
-                    <p>
-                        
-                    </p>
-                </div>
-            </th>
-            <th>
-                <div>
-                    <p>
-                        
-                    </p>
-                    <p>
-                        Total game kills
-                    </p>
-                    <p>
-                        
-                    </p>
-                </div>
-            </th>
-            <th>
-                <div>
-                    <p>
-                        
-                    </p>
-                    <p>
-                        Kill Rank
-                    </p>
-                    <p>
-                        (Player: Score)
-                    </p>
-                    <p>
-                        
-                    </p>
-                </div>
-            </th>
-            <th>
-                <div>
-                    <p>
-                        
-                    </p>
-                    <p>
-                        Death Causes
-                    </p>
-                    <p>
-                        (Cause: Count)
-                    </p>
-                    <p>
-                        
-                    </p>
-                </div>
-            </th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>
-                <div>
-                    <p>
-                        Game 1
-                    </p>
-                </div>
-            </td>
-            <td>
-                <div>
-                    <p>
-                        1
-                    </p>
-                </div>
-            </td>
-            <td>
-                <div>
-                    <p>
-                        
-                    </p>
-                    <p>
-                        Player1: -1
-                    </p>
-                    <p>
-                        
-                    </p>
-                </div>
-            </td>
-            <td>
-                <div>
-                    <p>
-                        
-                    </p>
-                    <p>
-                        TriggerHurt: 1
-                    </p>
-                    <p>
-                        
-                    </p>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <div>
-                    <p>
-                        Game 2
-                    </p>
-                </div>
-            </td>
-            <td>
-                <div>
-                    <p>
-                        2
-                    </p>
-                </div>
-            </td>
-            <td>
-                <div>
-                    <p>
-                        
-                    </p>
-                    <p>
-                        Player2: 1
-                    </p>
-                    <p>
-                        
-                    </p>
-                    <p>
-                        Player1: -1
-                    </p>
-                    <p>
-                        
-                    </p>
-                </div>
-            </td>
-            <td>
-                <div>
-                    <p>
-                        
-                    </p>
-                    <p>
-                        Rocket Splash: 1
-                    </p>
-                    <p>
-                        
-                    </p>
-                    <p>
-                        TriggerHurt: 1
-                    </p>
-                    <p>
-                        
-                    </p>
-                </div>
-            </td>
-        </tr>
-    </tbody>
+<thead>
+<tr>
+<th>
+<div>
+<p>
+
+</p>
+<p>
+
+</p>
+<p>
+
+</p>
+</div>
+</th>
+<th>
+<div>
+<p>
+
+</p>
+<p>
+Total game kills
+</p>
+<p>
+
+</p>
+</div>
+</th>
+<th>
+<div>
+<p>
+
+</p>
+<p>
+Kill Rank
+</p>
+<p>
+(Player: Score)
+</p>
+<p>
+
+</p>
+</div>
+</th>
+<th>
+<div>
+<p>
+
+</p>
+<p>
+Death Causes
+</p>
+<p>
+(Cause: Count)
+</p>
+<p>
+
+</p>
+</div>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<div>
+<p>
+Game 1
+</p>
+</div>
+</td>
+<td>
+<div>
+<p>
+1
+</p>
+</div>
+</td>
+<td>
+<div>
+<p>
+
+</p>
+<p>
+Player1: -1
+</p>
+<p>
+
+</p>
+</div>
+</td>
+<td>
+<div>
+<p>
+
+</p>
+<p>
+TriggerHurt: 1
+</p>
+<p>
+
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td>
+<div>
+<p>
+Game 2
+</p>
+</div>
+</td>
+<td>
+<div>
+<p>
+2
+</p>
+</div>
+</td>
+<td>
+<div>
+<p>
+
+</p>
+<p>
+Player2: 1
+</p>
+<p>
+
+</p>
+<p>
+Player1: -1
+</p>
+<p>
+
+</p>
+</div>
+</td>
+<td>
+<div>
+<p>
+
+</p>
+<p>
+Rocket Splash: 1
+</p>
+<p>
+
+</p>
+<p>
+TriggerHurt: 1
+</p>
+<p>
+
+</p>
+</div>
+</td>
+</tr>
+</tbody>
 </table>
 
 ## :scroll: Documentation

@@ -1,0 +1,302 @@
+╭─────────┬──────────────────┬────────────────────┬───────────────────╮
+│         │                  │                    │                   │
+│         │ Total game kills │  Kill Rank         │  Death Causes     │
+│         │                  │  (Player: Score)   │  (Cause: Count)   │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│ Game 1  │        0         │   Isgalamido: 0    │                   │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │                    │ TriggerHurt: 7    │
+│         │                  │   Mocinha: 0       │                   │
+│ Game 2  │        11        │                    │ Rocket Splash: 3  │
+│         │                  │   Isgalamido: -5   │                   │
+│         │                  │                    │ Falling: 1        │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │  Isgalamido: 1     │  TriggerHurt: 2   │
+│         │                  │                    │                   │
+│ Game 3  │        4         │  Dono da Bola: -1  │  Rocket: 1        │
+│         │                  │                    │                   │
+│         │                  │  Zeh: -2           │  Falling: 1       │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │                    │ Rocket Splash: 51 │
+│         │                  │                    │                   │
+│         │                  │                    │ Rocket: 20        │
+│         │                  │ Zeh: 20            │                   │
+│         │                  │                    │ Falling: 11       │
+│         │                  │ Isgalamido: 19     │                   │
+│ Game 4  │       105        │                    │ TriggerHurt: 9    │
+│         │                  │ Assasinu Credi: 13 │                   │
+│         │                  │                    │ Railgun: 8        │
+│         │                  │ Dono da Bola: 13   │                   │
+│         │                  │                    │ Machinegun: 4     │
+│         │                  │                    │                   │
+│         │                  │                    │ Shotgun: 2        │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │ Isgalamido: 2      │ TriggerHurt: 5    │
+│         │                  │                    │                   │
+│         │                  │ Assasinu Credi: 1  │ Rocket: 4         │
+│ Game 5  │        14        │                    │                   │
+│         │                  │ Zeh: 1             │ Rocket Splash: 4  │
+│         │                  │                    │                   │
+│         │                  │ Zeh: 0             │ Railgun: 1        │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │                    │ Rocket Splash: 13 │
+│         │                  │ Oootsimo: 8        │                   │
+│         │                  │                    │ Rocket: 5         │
+│         │                  │ Zeh: 7             │                   │
+│         │                  │                    │ Shotgun: 4        │
+│         │                  │ Isgalamido: 3      │                   │
+│ Game 6  │        29        │                    │ TriggerHurt: 3    │
+│         │                  │ Dono da Bola: 2    │                   │
+│         │                  │                    │ Railgun: 2        │
+│         │                  │ Assasinu Credi: 1  │                   │
+│         │                  │                    │ Machinegun: 1     │
+│         │                  │ Mal: 0             │                   │
+│         │                  │                    │ Falling: 1        │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │ Assasinu Credi: 22 │ Rocket Splash: 49 │
+│         │                  │                    │                   │
+│         │                  │ Oootsimo: 20       │ Rocket: 29        │
+│         │                  │                    │                   │
+│         │                  │ Isgalamido: 16     │ TriggerHurt: 20   │
+│         │                  │                    │                   │
+│ Game 7  │       130        │ Dono da Bola: 12   │ Railgun: 9        │
+│         │                  │                    │                   │
+│         │                  │ Zeh: 9             │ Machinegun: 9     │
+│         │                  │                    │                   │
+│         │                  │ Chessus: 0         │ Shotgun: 7        │
+│         │                  │                    │                   │
+│         │                  │ Mal: -3            │ Falling: 7        │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │                    │ Rocket Splash: 39 │
+│         │                  │ Isgalamido: 20     │                   │
+│         │                  │                    │ Rocket: 18        │
+│         │                  │ Oootsimo: 16       │                   │
+│         │                  │                    │ Railgun: 12       │
+│         │                  │ Zeh: 12            │                   │
+│ Game 8  │        89        │                    │ TriggerHurt: 9    │
+│         │                  │ Assasinu Credi: 10 │                   │
+│         │                  │                    │ Falling: 6        │
+│         │                  │ Dono da Bola: 3    │                   │
+│         │                  │                    │ Machinegun: 4     │
+│         │                  │ Mal: -2            │                   │
+│         │                  │                    │ Shotgun: 1        │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │                    │ Rocket Splash: 25 │
+│         │                  │ Zeh: 12            │                   │
+│         │                  │                    │ Rocket: 17        │
+│         │                  │ Chessus: 11        │                   │
+│         │                  │                    │ Railgun: 10       │
+│         │                  │ Assasinu Credi: 10 │                   │
+│ Game 9  │        67        │                    │ TriggerHurt: 8    │
+│         │                  │ Oootsimo: 9        │                   │
+│         │                  │                    │ Machinegun: 3     │
+│         │                  │ Mal: 3             │                   │
+│         │                  │                    │ Falling: 3        │
+│         │                  │ Dono da Bola: 0    │                   │
+│         │                  │                    │ Shotgun: 1        │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │                    │ Telefrag: 25      │
+│         │                  │                    │                   │
+│         │                  │ Zeh: 7             │ TriggerHurt: 17   │
+│         │                  │                    │                   │
+│         │                  │ Isgalamido: 6      │ Railgun: 7        │
+│         │                  │                    │                   │
+│         │                  │ Chessus: 5         │ Rocket: 4         │
+│         │                  │                    │                   │
+│ Game 10 │        60        │ Assasinu Credi: 3  │ Bfg Splash: 2     │
+│         │                  │                    │                   │
+│         │                  │ Dono da Bola: 3    │ Bfg: 2            │
+│         │                  │                    │                   │
+│         │                  │ Mal: 1             │ Rocket Splash: 1  │
+│         │                  │                    │                   │
+│         │                  │ Oootsimo: -1       │ Machinegun: 1     │
+│         │                  │                    │                   │
+│         │                  │                    │ Crush: 1          │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │ Isgalamido: 5      │                   │
+│         │                  │                    │ TriggerHurt: 7    │
+│         │                  │ Oootsimo: 4        │                   │
+│         │                  │                    │ Rocket Splash: 4  │
+│         │                  │ Chessus: 0         │                   │
+│         │                  │                    │ Railgun: 4        │
+│ Game 11 │        20        │ Mal: 0             │                   │
+│         │                  │                    │ Bfg Splash: 3     │
+│         │                  │ Zeh: 0             │                   │
+│         │                  │                    │ Machinegun: 1     │
+│         │                  │ Dono da Bola: -2   │                   │
+│         │                  │                    │ Crush: 1          │
+│         │                  │ Assasinu Credi: -3 │                   │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │                    │ Railgun: 38       │
+│         │                  │ Isgalamido: 26     │                   │
+│         │                  │                    │ TriggerHurt: 37   │
+│         │                  │ Assasinu Credi: 20 │                   │
+│         │                  │                    │ Rocket Splash: 35 │
+│         │                  │ Oootsimo: 13       │                   │
+│         │                  │                    │ Rocket: 25        │
+│ Game 12 │       160        │ Chessus: 13        │                   │
+│         │                  │                    │ Bfg Splash: 8     │
+│         │                  │ Zeh: 13            │                   │
+│         │                  │                    │ Bfg: 8            │
+│         │                  │ Dono da Bola: 3    │                   │
+│         │                  │                    │ Machinegun: 7     │
+│         │                  │ Mal: -6            │                   │
+│         │                  │                    │ Falling: 2        │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │ Oootsimo: 2        │                   │
+│         │                  │                    │                   │
+│         │                  │ Zeh: 2             │ TriggerHurt: 2    │
+│         │                  │                    │                   │
+│         │                  │ Assasinu Credi: 0  │ Rocket: 1         │
+│         │                  │                    │                   │
+│ Game 13 │        6         │ Chessus: 0         │ Rocket Splash: 1  │
+│         │                  │                    │                   │
+│         │                  │ Mal: 0             │ Bfg Splash: 1     │
+│         │                  │                    │                   │
+│         │                  │ Dono da Bola: -1   │ Bfg: 1            │
+│         │                  │                    │                   │
+│         │                  │ Isgalamido: -1     │                   │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │                    │ TriggerHurt: 31   │
+│         │                  │ Isgalamido: 22     │                   │
+│         │                  │                    │ Rocket Splash: 24 │
+│         │                  │ Oootsimo: 9        │                   │
+│         │                  │                    │ Rocket: 23        │
+│         │                  │ Assasinu Credi: 7  │                   │
+│         │                  │                    │ Railgun: 20       │
+│ Game 14 │       122        │ Chessus: 7         │                   │
+│         │                  │                    │ Bfg Splash: 10    │
+│         │                  │ Zeh: 5             │                   │
+│         │                  │                    │ Falling: 5        │
+│         │                  │ Dono da Bola: 2    │                   │
+│         │                  │                    │ Bfg: 5            │
+│         │                  │ Mal: -2            │                   │
+│         │                  │                    │ Machinegun: 4     │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │ Assasinu Credi: 0  │                   │
+│         │                  │                    │                   │
+│         │                  │ Assasinu Credi: 0  │                   │
+│         │                  │                    │                   │
+│ Game 15 │        3         │ Oootsimo: 0        │  TriggerHurt: 3   │
+│         │                  │                    │                   │
+│         │                  │ Dono da Bola: 0    │                   │
+│         │                  │                    │                   │
+│         │                  │ Isgalamido: -3     │                   │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │ Assasinu Credi: 0  │                   │
+│         │                  │                    │                   │
+│         │                  │ Oootsimo: 0        │                   │
+│         │                  │                    │                   │
+│ Game 16 │        0         │ Zeh: 0             │                   │
+│         │                  │                    │                   │
+│         │                  │ Isgalamido: 0      │                   │
+│         │                  │                    │                   │
+│         │                  │ Dono da Bola: 0    │                   │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │ Oootsimo: 1        │                   │
+│         │                  │                    │                   │
+│         │                  │ Zeh: 0             │ TriggerHurt: 6    │
+│         │                  │                    │                   │
+│         │                  │ Isgalamido: 0      │ Falling: 3        │
+│ Game 17 │        13        │                    │                   │
+│         │                  │ Mal: -1            │ Rocket Splash: 2  │
+│         │                  │                    │                   │
+│         │                  │ Dono da Bola: -2   │ Railgun: 2        │
+│         │                  │                    │                   │
+│         │                  │ Assasinu Credi: -3 │                   │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │ Assasinu Credi: 2  │                   │
+│         │                  │                    │                   │
+│         │                  │ Zeh: 2             │ Rocket Splash: 4  │
+│         │                  │                    │                   │
+│         │                  │ Isgalamido: 1      │ Rocket: 1         │
+│ Game 18 │        7         │                    │                   │
+│         │                  │ Oootsimo: 0        │ Falling: 1        │
+│         │                  │                    │                   │
+│         │                  │ Mal: -1            │ TriggerHurt: 1    │
+│         │                  │                    │                   │
+│         │                  │ Dono da Bola: -1   │                   │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │                    │ Rocket Splash: 32 │
+│         │                  │ Zeh: 20            │                   │
+│         │                  │                    │ Rocket: 27        │
+│         │                  │ Dono da Bola: 14   │                   │
+│         │                  │                    │ TriggerHurt: 12   │
+│         │                  │ Isgalamido: 14     │                   │
+│ Game 19 │        95        │                    │ Railgun: 10       │
+│         │                  │ Oootsimo: 10       │                   │
+│         │                  │                    │ Machinegun: 7     │
+│         │                  │ Assasinu Credi: 9  │                   │
+│         │                  │                    │ Shotgun: 6        │
+│         │                  │ Mal: 2             │                   │
+│         │                  │                    │ Falling: 1        │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │ Dono da Bola: 2    │                   │
+│         │                  │                    │                   │
+│         │                  │ Oootsimo: 1        │                   │
+│         │                  │                    │                   │
+│         │                  │ Mal: 0             │ Rocket Splash: 2  │
+│ Game 20 │        3         │                    │                   │
+│         │                  │ Assasinu Credi: 0  │ Rocket: 1         │
+│         │                  │                    │                   │
+│         │                  │ Zeh: 0             │                   │
+│         │                  │                    │                   │
+│         │                  │ Isgalamido: 0      │                   │
+│         │                  │                    │                   │
+├─────────┼──────────────────┼────────────────────┼───────────────────┤
+│         │                  │                    │                   │
+│         │                  │                    │ Rocket Splash: 60 │
+│         │                  │ Oootsimo: 22       │                   │
+│         │                  │                    │ Rocket: 37        │
+│         │                  │ Assasinu Credi: 19 │                   │
+│         │                  │                    │ TriggerHurt: 14   │
+│         │                  │ Zeh: 19            │                   │
+│ Game 21 │       131        │                    │ Railgun: 9        │
+│         │                  │ Isgalamido: 17     │                   │
+│         │                  │                    │ Shotgun: 4        │
+│         │                  │ Dono da Bola: 14   │                   │
+│         │                  │                    │ Machinegun: 4     │
+│         │                  │ Mal: 6             │                   │
+│         │                  │                    │ Falling: 3        │
+│         │                  │                    │                   │
+╰─────────┴──────────────────┴────────────────────┴───────────────────╯
