@@ -333,12 +333,6 @@ mod tests {
         )
     }
 
-    //pub struct Game {
-    //    pub total_kills: u32,
-    //    pub kills_by_means_death: HashMap<MeanDeath, u32, RandomState>,
-    //    pub players_data: HashMap<u32, PlayerData, RandomState>,
-    //}
-
     fn a_random_mean_death() -> impl Strategy<Value = MeanDeath> {
         prop_oneof![
             Just(MeanDeath::Unknown),
@@ -477,16 +471,102 @@ mod tests {
             "╰────────┴──────────────────┴─────────────────┴────────────────╯",
         );
 
-        match result {
-            Ok(Report::Text(table)) => {
-                let table_str = table.to_string();
-                assert!(!table_str.is_empty());
-                assert_eq!(table_str, expected);
-            }
-            Ok(Report::Html(_)) => {
-                panic!("Expected text report, got html report");
-            }
-            _ => panic!("Unexpected result"),
+        let table_str = result.unwrap().to_string();
+        assert!(!table_str.is_empty());
+        assert_eq!(table_str, expected);
+    }
+
+    proptest! {
+        #[test]
+        fn test_populate_table_content(
+            game in arb_game(),
+            report_type in report_type(),
+            game_number in any::<usize>(),
+        ) {
+            let mut builder = Builder::default();
+            let players_data: &mut Vec<&PlayerData> = &mut game.players_data.values().collect();
+            players_data.sort_unstable();
+            populate_table_content(&mut builder, &game, players_data, &report_type, game_number);
+            let table = builder.build();
+            let table_str = table.to_string();
+            assert!(!table_str.is_empty());
         }
+    }
+
+    #[test]
+    fn test_simple_populate_table_content() {
+        let mut kills_by_means_death: HashMap<MeanDeath, u32> = HashMap::new();
+        kills_by_means_death.insert(MeanDeath::TriggerHurt, 1);
+        let mut players_data: HashMap<u32, PlayerData> = HashMap::new();
+        players_data.insert(
+            2,
+            PlayerData {
+                name: "Player1".to_string(),
+                kills: -1,
+            },
+        );
+
+        let game = Game {
+            total_kills: 1,
+            kills_by_means_death,
+            players_data,
+        };
+
+        let report_type = ReportType::All;
+        let game_number = 1;
+        let mut builder = Builder::default();
+        let players_data: &mut Vec<&PlayerData> = &mut game.players_data.values().collect();
+        players_data.sort_unstable();
+        populate_table_content(&mut builder, &game, players_data, &report_type, game_number);
+        let mut table = builder.build();
+        table.with(Style::modern_rounded());
+        let table_str = table.to_string();
+        assert!(!table_str.is_empty());
+
+        // formatting seems weird because we didn't set the alignment
+        let expected = concat!(
+            "╭────────┬───┬─────────────┬────────────────╮\n",
+            "│ Game 1 │ 1 │             │                │\n",
+            "│        │   │ Player1: -1 │ TriggerHurt: 1 │\n",
+            "│        │   │             │                │\n",
+            "╰────────┴───┴─────────────┴────────────────╯",
+        );
+
+        assert_eq!(table_str, expected);
+    }
+
+    proptest! {
+        #[test]
+        fn test_populate_table_headers(
+            report_type in report_type(),
+        ) {
+            let mut builder = Builder::default();
+            populate_table_headers(&mut builder, &report_type);
+            let table = builder.build();
+            let table_str = table.to_string();
+            assert!(!table_str.is_empty());
+        }
+    }
+
+    #[test]
+    fn test_simple_populate_table_headers() {
+        let report_type = ReportType::All;
+        let mut builder = Builder::default();
+        populate_table_headers(&mut builder, &report_type);
+        let mut table = builder.build();
+        table.with(Style::modern_rounded());
+        let table_str = table.to_string();
+        assert!(!table_str.is_empty());
+
+        let expected = concat!(
+            "╭──┬──────────────────┬─────────────────┬────────────────╮\n",
+            "│  │                  │                 │                │\n",
+            "│  │ Total game kills │ Kill Rank       │ Death Causes   │\n",
+            "│  │                  │ (Player: Score) │ (Cause: Count) │\n",
+            "│  │                  │                 │                │\n",
+            "╰──┴──────────────────┴─────────────────┴────────────────╯",
+        );
+
+        assert_eq!(table_str, expected);
     }
 }
