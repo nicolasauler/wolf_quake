@@ -27,10 +27,24 @@
 ## 🏞️ Overview
 
 Wolf Quake is a parser for Quake 3 Arena log files.
+You can find a log file: [file](https://gist.github.com/cloudwalk-tests/be1b636e58abff14088c8b5309f575d8)
 
-You can find the log file: [file](https://gist.github.com/cloudwalk-tests/be1b636e58abff14088c8b5309f575d8)
+### Usage
+```shell
+Quake 3 log parser
 
-:warning: Wolf Quake is a wip
+Usage: wolf_quake [OPTIONS] <LOG_FILE>
+
+Arguments:
+  <LOG_FILE>  The path to the log file, required
+
+Options:
+  -r, --report-type <REPORT_TYPE>      The type of report to generate - Report with player ranking and mean of death ranking - Report with player ranking - Report with mean of death ranking Default: all [default: all] [possible values: all, player-rank, mean-death]
+  -f, --report-format <REPORT_FORMAT>  The format of the report to generate - Text table report in console - Html table report Default: text [default: text] [possible values: html, text]
+  -o, --output-file <FILE>             The output file to write the report If not provided, the report will be printed to the console
+  -h, --help                           Print help (see more with '--help')
+  -V, --version                        Print version
+```
 
 ## :scroll: Documentation
 
@@ -46,7 +60,9 @@ Current status:
 - [x] Enviroment setup: CI, local and github
 - [x] Happy path log parsing and tests
 - [x] Bug handling in original log file
-- [-] CLI
+- [x] CLI
+- [ ] Integration tests
+- [ ] Documentation
 
 For testing, Wolf Quake uses the [proptest](https://docs.rs/proptest/latest/proptest/) crate, which is kind of a more purpose-oriented fuzzy testing tool.
 

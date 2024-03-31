@@ -153,8 +153,10 @@ pub fn get_report(
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use super::*;
-    //use proptest::prelude::*;
+    use proptest::prelude::*;
 
     #[test]
     fn test_display_empty_text_report() {
@@ -329,5 +331,162 @@ mod tests {
                 "</table>"
             ),
         )
+    }
+
+    //pub struct Game {
+    //    pub total_kills: u32,
+    //    pub kills_by_means_death: HashMap<MeanDeath, u32, RandomState>,
+    //    pub players_data: HashMap<u32, PlayerData, RandomState>,
+    //}
+
+    fn a_random_mean_death() -> impl Strategy<Value = MeanDeath> {
+        prop_oneof![
+            Just(MeanDeath::Unknown),
+            Just(MeanDeath::Shotgun),
+            Just(MeanDeath::Gauntlet),
+            Just(MeanDeath::Machinegun),
+            Just(MeanDeath::Grenade),
+            Just(MeanDeath::GrenadeSplash),
+            Just(MeanDeath::Rocket),
+            Just(MeanDeath::RocketSplash),
+            Just(MeanDeath::Plasma),
+            Just(MeanDeath::PlasmaSplash),
+            Just(MeanDeath::Railgun),
+            Just(MeanDeath::Lightning),
+            Just(MeanDeath::Bfg),
+            Just(MeanDeath::BfgSplash),
+            Just(MeanDeath::Water),
+            Just(MeanDeath::Slime),
+            Just(MeanDeath::Lava),
+            Just(MeanDeath::Crush),
+            Just(MeanDeath::Telefrag),
+            Just(MeanDeath::Falling),
+            Just(MeanDeath::Suicide),
+            Just(MeanDeath::TargetLaser),
+            Just(MeanDeath::TriggerHurt),
+            Just(MeanDeath::Nail),
+            Just(MeanDeath::Chaingun),
+            Just(MeanDeath::ProximityMine),
+            Just(MeanDeath::Kamikaze),
+            Just(MeanDeath::Juiced),
+            Just(MeanDeath::Grapple),
+        ]
+    }
+
+    prop_compose! {
+        fn arb_player_data()(name in "[a-z]*", kills in any::<i32>()) -> PlayerData {
+            PlayerData { name, kills }
+        }
+    }
+
+    prop_compose! {
+        fn arb_game()(
+            total_kills in any::<u32>(),
+            kills_by_means_death in prop::collection::hash_map(a_random_mean_death(), any::<u32>(), 0..10),
+            players_data in prop::collection::hash_map(any::<u32>(), arb_player_data(), 0..10),
+        ) -> Game {
+            Game {
+                total_kills,
+                kills_by_means_death,
+                players_data
+            }
+        }
+    }
+
+    fn report_type() -> impl Strategy<Value = ReportType> {
+        prop_oneof![
+            Just(ReportType::All),
+            Just(ReportType::PlayerRank),
+            Just(ReportType::MeanDeath),
+        ]
+    }
+
+    fn report_format() -> impl Strategy<Value = ReportFormat> {
+        prop_oneof![Just(ReportFormat::Html), Just(ReportFormat::Text)]
+    }
+
+    proptest! {
+        #[test]
+        fn test_get_report(
+            games in prop::collection::vec(arb_game(), 1..5),
+            report_type in report_type(),
+            report_format in report_format(),
+        ) {
+            let result = get_report(&games, &report_type, &report_format);
+            assert!(result.is_ok());
+
+            match result {
+                Ok(Report::Text(table)) => {
+                    let table_str = table.to_string();
+                    assert!(!table_str.is_empty());
+                }
+                Ok(Report::Html(html_table)) => {
+                    let html_table_str = html_table.to_string();
+                    assert!(!html_table_str.is_empty());
+                }
+                _ => panic!("Unexpected result"),
+            }
+        }
+    }
+
+    #[test]
+    fn test_get_simple_report() {
+        let mut kills_by_means_death: HashMap<MeanDeath, u32> = HashMap::new();
+        kills_by_means_death.insert(MeanDeath::TriggerHurt, 1);
+        let mut players_data: HashMap<u32, PlayerData> = HashMap::new();
+        players_data.insert(
+            2,
+            PlayerData {
+                name: "Player1".to_string(),
+                kills: -1,
+            },
+        );
+
+        let games = vec![
+            Game {
+                total_kills: 1,
+                kills_by_means_death: kills_by_means_death.clone(),
+                players_data: players_data.clone(),
+            },
+            Game {
+                total_kills: 1,
+                kills_by_means_death,
+                players_data,
+            },
+        ];
+
+        let report_type = ReportType::All;
+        let report_format = ReportFormat::Text;
+        let result = get_report(&games, &report_type, &report_format);
+        assert!(result.is_ok());
+
+        let expected = concat!(
+            "╭────────┬──────────────────┬─────────────────┬────────────────╮\n",
+            "│        │                  │                 │                │\n",
+            "│        │ Total game kills │ Kill Rank       │ Death Causes   │\n",
+            "│        │                  │ (Player: Score) │ (Cause: Count) │\n",
+            "│        │                  │                 │                │\n",
+            "├────────┼──────────────────┼─────────────────┼────────────────┤\n",
+            "│        │                  │                 │                │\n",
+            "│ Game 1 │        1         │   Player1: -1   │ TriggerHurt: 1 │\n",
+            "│        │                  │                 │                │\n",
+            "├────────┼──────────────────┼─────────────────┼────────────────┤\n",
+            "│        │                  │                 │                │\n",
+            "│ Game 2 │        1         │   Player1: -1   │ TriggerHurt: 1 │\n",
+            "│        │                  │                 │                │\n",
+            "╰────────┴──────────────────┴─────────────────┴────────────────╯",
+        );
+
+        match result {
+            Ok(Report::Text(table)) => {
+                let table_str = table.to_string();
+                assert!(!table_str.is_empty());
+                assert_eq!(table_str, expected);
+            }
+            Ok(Report::Html(_)) => {
+                panic!("Expected text report, got html report");
+            }
+            _ => panic!("Unexpected result"),
+        }
     }
 }
